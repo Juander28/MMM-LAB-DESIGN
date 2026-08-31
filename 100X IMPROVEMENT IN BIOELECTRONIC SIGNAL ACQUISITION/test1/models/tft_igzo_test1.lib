@@ -1,0 +1,143 @@
+* ==========================================================================
+* IGZO TFT - level-1 models extracted from the UCI/INRF measurements
+* Source data : TFT/TFT{1,2,3}/VDS/*.xls (output curves, VDS 0 -> 10 V)
+*               TFT/test/*.xls           (transfer sweeps, VDS = 0.1 / 1 / 2 V)
+* Extractor   : tft/extract_params.py    (linear and saturation routes agree
+*                                         to 0.5 % on long-channel devices)
+* Extracted   : 2026-08-19
+*
+* Kp here is mu*Cox [A/V^2] per square; set w= and l= on the instance.
+*
+* GATE DIELECTRIC: 50 nm Al2O3 (ALD), eps_r = 9.
+*   MEASURED, not assumed: TFT/TFT_layout.GDS gives the Test_capacitance plate
+*   as 400 x 400 um, and TFT1/CAP/CAP_IN.xls measures 250.2 pF on it, so
+*     Cox = 156.4 nF/cm^2 = 1.564 fF/um^2  (eps_r = 8.83 for the 50 nm Al2O3).
+*   TOX below is the SiO2-EQUIVALENT thickness (22.1 nm), because SPICE
+*   level-1 assumes eps_ox = 3.9 when it turns TOX into capacitance.
+*   Implied mobility mu = Kp/Cox = 4.6 cm^2/Vs.
+*   Gate overlap is 5.0 um per side, measured off the GDS and consistent across
+*   L = 10, 20, 40, 80 and 160 um cells.  Cgso = Cgdo = Cox * 5 um = 7.82 fF/um
+*   of gate width = 7.82e-9 F/m.
+* Vto is near zero and slightly negative on many devices (depletion-like),
+* which is normal for unpassivated IGZO.
+* ==========================================================================
+
+* --- best case: long-channel devices of the best chip (TFT1, L >= 40 um).
+*     Not contact-limited: linear and saturation extractions agree.
+.model TFT_IGZO_BEST NMOS (Level=1 Vto=0.09 Kp=0.717u Lambda=0.0067
++  Tox=22.1n Cgso=7.82e-9 Cgdo=7.82e-9 Cgbo=1.0e-9)
+
+* --- typical: median over every working device of the best chip.
+.model TFT_IGZO_TYP  NMOS (Level=1 Vto=-0.26 Kp=0.562u Lambda=0.0142
++  Tox=22.1n Cgso=7.82e-9 Cgdo=7.82e-9 Cgbo=1.0e-9)
+
+* --- short channel (L <= 10 um): contact-limited, Kp collapses.
+*     Use with the external Rc below for a physical representation.
+.model TFT_IGZO_SHORT NMOS (Level=1 Vto=-1.32 Kp=0.128u Lambda=0.0659
++  Tox=22.1n Cgso=7.82e-9 Cgdo=7.82e-9 Cgbo=1.0e-9)
+
+* --- across all three chips, including the bad ones - worst case for yield.
+.model TFT_IGZO_ALL  NMOS (Level=1 Vto=-0.53 Kp=0.381u Lambda=0.0355
++  Tox=22.1n Cgso=7.82e-9 Cgdo=7.82e-9 Cgbo=1.0e-9)
+
+* --------------------------------------------------------------------------
+* Physical variant: intrinsic channel plus the measured contact resistance.
+* 2*Rc*W = 6.6e6 Ohm*um at VGS = 6 V  ->  Rc = 3.3e6/W[um] Ohm per contact.
+* Instantiate as:  XM1 d g s TFT_IGZO_RC W=703
+* --------------------------------------------------------------------------
+.subckt TFT_IGZO_RC d g s W=100
+Rd d di '3.3e6/W'
+Rs s si '3.3e6/W'
+M1 di g si si TFT_IGZO_BEST w='W*1u' l=8u
+.ends
+
+* --------------------------------------------------------------------------
+* VALIDATION (tft/validate_model.py)
+*   Simulated against the measured output curves at each device's own W and L:
+*   median sim/meas = 1.01, all 18 comparisons within 1.5x.  The TFT_IGZO_RC
+*   subcircuit independently reproduces a short-channel device from the
+*   long-channel Kp plus the measured contact resistance (654 uA simulated vs
+*   670-701 uA measured at VGS = 6 V, VDS = 10 V, W = 1000 um, L = 8 um).
+*
+* LIMITS - the model is DC-only and these are not small:
+*   1. NO GATE CAPACITANCE.  TOX/COX are not specified, so ngspice computes no
+*      intrinsic Meyer capacitance, and Cgso/Cgdo/Cgbo below are placeholders
+*      inherited from NMOSGEN - they were never measured.  At 50-200 MHz the
+*      gate capacitance loads the tank directly.  DO NOT trust this model for
+*      RF loading until Cox is measured on a structure of known area
+*      (TFT/*/COX/ is empty and the CAP pad area is unrecorded).
+*   2. Level-1 imposes a square law.  Measured saturation exponent is
+*      gamma = 2.31 (TFT1 median), 2.44 for L >= 40 um - so the model is about
+*      20 % pessimistic on gm at a given current.
+*   3. Validated range only: VGS <= 6 V, VDS <= 10 V.  Anything simulated above
+*      that is extrapolation, not prediction.
+*   4. TFT2 is not represented: its saturation exponent comes out at 0.87,
+*      which no square-law model can express.  Treat that chip as anomalous.
+*
+* DESIGN NOTE - the figure of merit is intrinsic gain, not Kp alone.
+*   Reaching a given gm with this device takes ~16x more current than the
+*   NMOSGEN it replaces, and gds = lambda*Id scales with that current:
+*      NMOSGEN at gm 817 uS -> gds  6.4 uS, gm/gds = 128
+*      TFT     at gm 841 uS -> gds 32.0 uS, gm/gds =  26
+*   The tank loss conductance is 253 uS at 100 MHz, so the pair's own output
+*   conductance adds 25 % extra loss with the TFT against 5 % with NMOSGEN.
+*   That raises the gm actually required well above the 808 uS derived from
+*   the NMOSGEN design point.
+* --------------------------------------------------------------------------
+
+* ==========================================================================
+* WHAT IT TAKES TO MAKE THIS CIRCUIT WORK  (revised 2026-08-19 with the GDS)
+*
+* Two things must change together.  Either one alone is not enough:
+*     channel length      L  ~ 1 um   (today 8-160 um)
+*     gate overlap        <= 2 um     (today 5 um, measured off the GDS)
+*
+* Channel B at 100 MHz, VDD = 5 V, W = 290 um, C7 = 40.362 pF:
+*     overlap 5 um (as fabricated) : 0.76 dB              FAILS
+*     overlap 2 um                 : 15.91 dB, BW 13.2 kHz, Q_L 7371   MEETS SPEC
+*     overlap 1 um                 : 32.96 dB, BW 12.8 kHz, Q_L 7698   MEETS SPEC
+*
+* The overlap requirement means SELF-ALIGNED source/drain - the gate defining
+* the S/D edges - not merely finer lithography.  With a fixed 5 um overlap the
+* overlap capacitance stops scaling with L, so fT flattens out as ~1/L instead
+* of 1/L^2 and shrinking the channel alone stops paying off.
+*
+* Transit frequency against the 50-200 MHz operating band (W = 500 um):
+*     L = 10 / 8 / 4 / 2 / 1 um  ->  fT = 2.45 / 3.36 / 8.36 / 19.1 / 41.3 MHz
+*
+* FINGERS DO NOT HELP.  Verified in simulation at constant total W = 500 um,
+* L = 10 um: N = 1 / 2 / 5 / 10 / 20 fingers give fT = 2.447 / 2.445 / 2.439 /
+* 2.429 / 2.409 MHz and gm = 191.26 uS in every case.  Splitting W leaves both
+* gm and Cgs unchanged, so fT is untouched; fingers only cut gate resistance
+* and reshape the layout.
+*
+* L = 8-10 um with W = 500 um does not work: gm = 191 uS against the ~950 uS
+* the tank needs, ~15 pF of device capacitance on a 40 pF tank, and the pair
+* needs >= 33600 um^2 against the 22500 um^2 cell budget.  Simulated: 0.02 dB.
+* ==========================================================================
+
+* ==========================================================================
+* IF L ~ 1 um IS NOT AVAILABLE  (measured 2026-08-19)
+*
+* Self-aligned S/D relaxes the channel-length requirement by about 2x.
+* Channel B at 100 MHz, VDD = 5 V, W/L = 290, overlap 0.5 um:
+*     L = 8 / 6 / 4 / 3 um -> 2.91 / 0.44 / 0.59 / 1.11 dB      all FAIL
+*     L = 2 um  -> 3.11 dB, BW 5.85 kHz, Q_L 16757              MEETS SPEC
+*     L = 1.5 um -> 11.32 dB, BW 15.6 kHz, Q_L 6323             MEETS SPEC
+* (coarse bias grid, so these depths are lower bounds, not ridge maxima)
+*
+* PROCESS BIAS: the cells drawn as TFT-5L print with an 8 um channel - a
+* +3 um bias, 1.5 um per edge.  Fixing that bias is worth more than it looks:
+* it is what stands between a 2 um drawn feature and a 2 um printed channel.
+*
+* LEVERS THAT DO NOT WORK, each checked rather than assumed:
+*   Fingers        - fT and gm are identical for N = 1..20 at constant total W.
+*   Thinner Al2O3  - Cox appears in gm and in Cgs alike and cancels out of fT.
+*   More current   - the DC gm is already there; the loss is frequency roll-off.
+*   Lower the band - simulated down to 6 MHz with L = 8 um: still no notch.
+*   Passive only   - deep notches (25-58 dB) come with MHz bandwidths; weak
+*                    coupling narrows them but drops the depth to nothing.
+*                    No passive operating point met the 30 kHz spec.
+*
+* LEVERS THAT DO: overlap (1/L_ov), channel length (1/L^2), mobility, overdrive.
+* ==========================================================================

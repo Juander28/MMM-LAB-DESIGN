@@ -1,0 +1,157 @@
+** sch_path: /foss/designs/MMM-LAB DESIGN/OPAM/test_biased.sch
+**.subckt test_biased
+x1 VDD OUT INN INP 0 OPAM_BIASED
+V1 VDD 0 8
+VCM cm 0 2.0
+VD d 0 0 AC 1 SIN(0 0.005 1)
+EIP INP cm d 0 0.5
+EIN INN cm d 0 -0.5
+**** begin user architecture code
+
+.include /headless/pdks/TFT-MMM-LAB-PDK/libs.tech/ngspice/design.ngspice
+.lib /headless/pdks/TFT-MMM-LAB-PDK/libs.tech/ngspice/igzo_mmm_lab.ngspice best
+
+
+
+.control
+set filetype=ascii
+save all
+
+* --- 1. operating point ----------------------------------------------------
+op
+echo === operating point ===
+print v(OUT) v(x1.net1) v(x1.net2) v(x1.net3) v(x1.net7) v(x1.net8) v(x1.BOOT_R) v(x1.BIAS)
+print i(VDD)
+show m : vgs vds id gm gds
+
+* --- 2. Bode: magnitude and phase ------------------------------------------
+ac dec 20 0.1 1e6
+let mag_db = vdb(OUT)
+let phase  = 180/PI * cph(v(OUT))
+* The reference is the PEAK of the response, not the value at 0.1 Hz.  OPAM
+* rises about 2 dB from 0.1 Hz to a peak near 2 Hz, so reading the gain at the
+* bottom of the sweep understates it and puts f-3dB in the wrong place.
+meas ac av_dc  FIND vdb(OUT) AT=0.1
+meas ac av_max MAX vdb(OUT)
+meas ac f3db   WHEN vdb(OUT)='av_max-3' FALL=1
+meas ac funity WHEN vdb(OUT)=0 FALL=1
+* Phase margin against the DC phase, not against zero: an inverting amplifier
+* already sits at 180 degrees at DC, and subtracting it is what makes the
+* number mean the same thing for both circuits.
+meas ac ph_dc FIND phase AT=0.1
+meas ac ph_u  FIND phase WHEN vdb(OUT)=0 FALL=1
+let pm = 180 + (ph_u - ph_dc)
+echo === bode: gain, corner, unity gain, phase margin ===
+print av_dc av_max f3db funity ph_dc ph_u pm
+meas ac av_stage1 MAX vdb(x1.net3) from=0.1 to=1e6
+meas ac av_stage2 MAX vdb(x1.net7) from=0.1 to=1e6
+* the AC vectors die with the plot, so keep what the later runs need
+set avmaxs = $&av_max
+set f3s    = $&f3db
+plot mag_db
+plot phase
+
+* --- 3. input / output relation --------------------------------------------
+dc VD -2 2 0.01
+echo === transfer: output against differential input ===
+meas dc out_max MAX v(OUT)
+meas dc out_min MIN v(OUT)
+meas dc vo_0    FIND v(OUT) AT=0
+meas dc vo_p    FIND v(OUT) AT=0.01
+meas dc vo_m    FIND v(OUT) AT=-0.01
+let slope    = (vo_p - vo_m) / 0.02
+let slope_db = db(abs(slope))
+print out_max out_min vo_0 slope slope_db
+plot v(OUT)
+
+* --- 4. sine inside the band -----------------------------------------------
+* a decade below the corner, and small enough that the output cannot clip
+let fsig = $f3s / 10
+let amp  = 0.3 / (10^($avmaxs/20))
+set fsigs = $&fsig
+set amps  = $&amp
+echo === sine: frequency and amplitude derived from the AC run ===
+print fsig amp
+* the honest reference for the cross-check is the AC gain at THIS frequency,
+* not the flat-band figure - one extra single-point AC run buys that
+ac lin 1 $fsigs $fsigs
+let av_ref = vdb(OUT)
+set avrefs = $&av_ref
+alter VD sin = [ 0 $amps $fsigs ]
+* Settle for 200 cycles before measuring, and step at 50 points per cycle.
+* This is not caution for its own sake: OPAM's bootstrap gate node is held
+* only by the off-device leakage (r_off in opam_core.spice), so the signal
+* pumps charge into it through C2 and the node drifts for tens of seconds
+* before it finds equilibrium.  Measured over 12 cycles the gain reads several
+* dB high and is still moving; by 150 cycles it has converged and stays put
+* through 1000.  OPAM2 has no such node and settles at once, so the same
+* window costs it only simulation time.
+let tskip = 200 / $fsigs
+let tstop = tskip + 6 / $fsigs
+set ts = $&tstop
+set tk = $&tskip
+let tstep = 1 / (50 * $fsigs)
+set tstp = $&tstep
+tran $tstp $ts $tk
+echo === sine: measured input and output ===
+meas tran vi_pp PP v(d)   FROM=$tk TO=$ts
+meas tran vo_pp PP v(OUT) FROM=$tk TO=$ts
+let av_tran = db(vo_pp / vi_pp)
+print vi_pp vo_pp av_tran
+plot v(OUT) v(d)
+
+* --- 5. the two gains have to agree ----------------------------------------
+* A gap here is a result, not a glitch.  The AC run linearises about the DC
+* operating point; the transient is the circuit actually running.  If they
+* disagree by more than about 1 dB, either the sine is clipping or the
+* operating point moves once the signal is applied - and for a floating
+* bootstrap node, it does.
+let gain_err = av_tran - $avrefs
+print gain_err
+echo === done ===
+.endc
+
+
+**** end user architecture code
+**.ends
+
+* expanding   symbol:  MMM-LAB DESIGN/OPAM/OPAM_BIASED.sym # of pins=5
+** sym_path: /foss/designs/MMM-LAB DESIGN/OPAM/OPAM_BIASED.sym
+** sch_path: /foss/designs/MMM-LAB DESIGN/OPAM/OPAM_BIASED.sch
+.subckt OPAM_BIASED VDD OUT INN INP VSS
+*.ipin INP
+*.iopin VDD
+*.ipin INN
+*.iopin VSS
+*.opin OUT
+XM2 net2 INP net1 igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XM4 net2 net3 net1 igzo_tft W=10u L=2000u ov=5u nf=1 m=1 B=0 b_scale=1
+XM3 net3 net2 net1 igzo_tft W=10u L=2000u ov=5u nf=1 m=1 B=0 b_scale=1
+XM5 net3 INN net1 igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XM6 VDD VDD net2 igzo_tft W=140u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM7 VDD VDD net3 igzo_tft W=140u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM8 net1 BIAS VSS igzo_tft W=5000u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM9 net5 net5 VSS igzo_tft W=10u L=140u ov=5u nf=1 m=1 B=0 b_scale=1
+XM10 VDD net4 net5 igzo_tft W=3200u L=70u ov=5u nf=1 m=1 B=0 b_scale=1
+XM11 net6 BIAS VSS igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XM12 net4 net2 net6 igzo_tft W=200u L=280u ov=5u nf=1 m=1 B=0 b_scale=1
+XM13 VDD BOOT_L net4 igzo_tft W=85u L=140u ov=5u nf=1 m=1 B=0 b_scale=1
+XM14 VDD net4 BOOT_L igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XC1 BOOT_L net4 cap_mim W=160.64u L=160.64u
+XM15 OUT OUT VSS igzo_tft W=10u L=140u ov=5u nf=1 m=1 B=0 b_scale=1
+XM16 VDD net7 OUT igzo_tft W=3200u L=70u ov=5u nf=1 m=1 B=0 b_scale=1
+XM17 net8 BIAS VSS igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XM18 net7 net3 net8 igzo_tft W=200u L=280u ov=5u nf=1 m=1 B=0 b_scale=1
+XM19 VDD BOOT_R net7 igzo_tft W=85u L=140u ov=5u nf=1 m=1 B=0 b_scale=1
+XM20 VDD net7 BOOT_R igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XC2 BOOT_R net7 cap_mim W=160.64u L=160.64u
+XC3 INN net2 cap_mim W=160.64u L=160.64u
+XC4 net3 INP cap_mim W=160.64u L=160.64u
+Rb1 BOOT_L VDD 1T
+Rb2 BOOT_R VDD 1T
+XMB0 VDD VDD NET_B1 igzo_tft W=200u L=1000u ov=5u nf=1 m=1 B=0 b_scale=1
+XMB1 NET_B1 NET_B1 BIAS igzo_tft W=200u L=1000u ov=5u nf=1 m=1 B=0 b_scale=1
+XMB2 BIAS BIAS VSS igzo_tft W=200u L=100u ov=5u nf=1 m=1 B=0 b_scale=1
+.ends
+
+.end

@@ -1,0 +1,89 @@
+Signal,Step,Cp,Itail,f0 (MHz),Baseline (dB),Depth (dB),BW (Hz),Q,Note
+"V(act+,act-)",Itail=0 Cp=100f,100f,0,210.0,-0.8570919064492205,0.03267694403580046,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=10µ Cp=100f,100f,10µ,210.0,-0.8571124569476285,0.03265596409936855,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=20µ Cp=100f,100f,20µ,210.0,-0.857121185213227,0.032647057974201976,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=30µ Cp=100f,100f,30µ,210.0,-0.8571279720686095,0.032640134642513585,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=40µ Cp=100f,100f,40µ,210.0,-0.8571337541631515,0.03263423749606953,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=50µ Cp=100f,100f,50µ,210.0,-0.8571388949315806,0.03262899536400943,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=60µ Cp=100f,100f,60µ,210.0,-0.8571435805714395,0.03262421809122551,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=70µ Cp=100f,100f,70µ,210.0,-0.8571479222946046,0.03261979210304344,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=80µ Cp=100f,100f,80µ,210.0,-0.8571519910393665,0.03261564492722557,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=90µ Cp=100f,100f,90µ,210.0,-0.85715583728576,0.03261172501778009,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=100µ Cp=100f,100f,100µ,210.0,-0.8571594981516271,0.032607994480633895,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=0 Cp=1.1p,1.1p,0,210.0,-3.0991766712564797,2.04475376286336,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=10µ Cp=1.1p,1.1p,10µ,210.0,-3.10139030583136,2.0425209678873997,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=20µ Cp=1.1p,1.1p,20µ,210.0,-3.10232932077622,2.0415740225443004,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=30µ Cp=1.1p,1.1p,30µ,210.0,-3.103058997862655,2.040838262333055,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=40µ Cp=1.1p,1.1p,40µ,210.0,-3.10368030805382,2.04021182536347,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=50µ Cp=1.1p,1.1p,50µ,210.0,-3.10423251262849,2.0396551050300302,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=60µ Cp=1.1p,1.1p,60µ,210.0,-3.10473553230217,2.0391480039582897,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=70µ Cp=1.1p,1.1p,70µ,210.0,-3.105201527706175,2.038678256046185,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=80µ Cp=1.1p,1.1p,80µ,210.0,-3.105638059704305,2.0382382319572447,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=90µ Cp=1.1p,1.1p,90µ,210.0,-3.10605056642404,2.0378224459819005,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=100µ Cp=1.1p,1.1p,100µ,210.0,-3.10644311259923,2.0374267987364103,,,notch shallower than 3 dB
+"V(act+,act-)",Itail=0 Cp=2.1p,2.1p,0,210.0,-5.80911462278615,3.5157937328125497,,,right -3dB not crossed
+"V(act+,act-)",Itail=10µ Cp=2.1p,2.1p,10µ,210.0,-5.815545309989471,3.5093368548487796,,,right -3dB not crossed
+"V(act+,act-)",Itail=20µ Cp=2.1p,2.1p,20µ,210.0,-5.8182698392,3.5066014923202102,,,right -3dB not crossed
+"V(act+,act-)",Itail=30µ Cp=2.1p,2.1p,30µ,210.0,-5.820385389476545,3.5044776349404945,,,right -3dB not crossed
+"V(act+,act-)",Itail=40µ Cp=2.1p,2.1p,40µ,210.0,-5.822185870665635,3.502670154487225,,,right -3dB not crossed
+"V(act+,act-)",Itail=50µ Cp=2.1p,2.1p,50µ,210.0,-5.82378522457421,3.50106463690678,,,right -3dB not crossed
+"V(act+,act-)",Itail=60µ Cp=2.1p,2.1p,60µ,210.0,-5.825241714335895,3.499602577476894,,,right -3dB not crossed
+"V(act+,act-)",Itail=70µ Cp=2.1p,2.1p,70µ,210.0,-5.826590129445615,3.498249042468345,,,right -3dB not crossed
+"V(act+,act-)",Itail=80µ Cp=2.1p,2.1p,80µ,210.0,-5.82785304401597,3.49698136412946,,,right -3dB not crossed
+"V(act+,act-)",Itail=90µ Cp=2.1p,2.1p,90µ,210.0,-5.82904614154231,3.4957837938946295,,,right -3dB not crossed
+"V(act+,act-)",Itail=100µ Cp=2.1p,2.1p,100µ,210.0,-5.830180840323215,3.4946448660802547,,,right -3dB not crossed
+"V(act+,act-)",Itail=0 Cp=3p,3p,0,210.0,-7.886741555939926,4.137364902651575,,,right -3dB not crossed
+"V(act+,act-)",Itail=10µ Cp=3p,3p,10µ,210.0,-7.897123769351225,4.126954437372875,,,right -3dB not crossed
+"V(act+,act-)",Itail=20µ Cp=3p,3p,20µ,210.0,-7.901518138749475,4.122548388610525,,,right -3dB not crossed
+"V(act+,act-)",Itail=30µ Cp=3p,3p,30µ,210.0,-7.90492840674035,4.119129167341651,,,right -3dB not crossed
+"V(act+,act-)",Itail=40µ Cp=3p,3p,40µ,210.0,-7.907829581336214,4.116220450781386,,,right -3dB not crossed
+"V(act+,act-)",Itail=50µ Cp=3p,3p,50µ,210.0,-7.910405740602905,4.113637651253895,,,right -3dB not crossed
+"V(act+,act-)",Itail=60µ Cp=3p,3p,60µ,210.0,-7.912751109501145,4.111286283094855,,,right -3dB not crossed
+"V(act+,act-)",Itail=70µ Cp=3p,3p,70µ,210.0,-7.91492204465737,4.10910983403263,,,right -3dB not crossed
+"V(act+,act-)",Itail=80µ Cp=3p,3p,80µ,210.0,-7.91695476150905,4.10707198758185,,,right -3dB not crossed
+"V(act+,act-)",Itail=90µ Cp=3p,3p,90µ,210.0,-7.91887460230828,4.105147331271819,,,right -3dB not crossed
+"V(act+,act-)",Itail=100µ Cp=3p,3p,100µ,210.0,-7.920700017789246,4.103317363234455,,,right -3dB not crossed
+V(pas+),Itail=0 Cp=100f,100f,0,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=10µ Cp=100f,100f,10µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=20µ Cp=100f,100f,20µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=30µ Cp=100f,100f,30µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=40µ Cp=100f,100f,40µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=50µ Cp=100f,100f,50µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=60µ Cp=100f,100f,60µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=70µ Cp=100f,100f,70µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=80µ Cp=100f,100f,80µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=90µ Cp=100f,100f,90µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=100µ Cp=100f,100f,100µ,210.0,-0.8596595651940435,0.030108298853435467,,,notch shallower than 3 dB
+V(pas+),Itail=0 Cp=1.1p,1.1p,0,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=10µ Cp=1.1p,1.1p,10µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=20µ Cp=1.1p,1.1p,20µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=30µ Cp=1.1p,1.1p,30µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=40µ Cp=1.1p,1.1p,40µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=50µ Cp=1.1p,1.1p,50µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=60µ Cp=1.1p,1.1p,60µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=70µ Cp=1.1p,1.1p,70µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=80µ Cp=1.1p,1.1p,80µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=90µ Cp=1.1p,1.1p,90µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=100µ Cp=1.1p,1.1p,100µ,210.0,-3.3686034659329653,1.7752814121585843,,,notch shallower than 3 dB
+V(pas+),Itail=0 Cp=2.1p,2.1p,0,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=10µ Cp=2.1p,2.1p,10µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=20µ Cp=2.1p,2.1p,20µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=30µ Cp=2.1p,2.1p,30µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=40µ Cp=2.1p,2.1p,40µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=50µ Cp=2.1p,2.1p,50µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=60µ Cp=2.1p,2.1p,60µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=70µ Cp=2.1p,2.1p,70µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=80µ Cp=2.1p,2.1p,80µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=90µ Cp=2.1p,2.1p,90µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=100µ Cp=2.1p,2.1p,100µ,210.0,-6.558064865080025,2.7667791629709644,,,notch shallower than 3 dB
+V(pas+),Itail=0 Cp=3p,3p,0,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=10µ Cp=3p,3p,10µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=20µ Cp=3p,3p,20µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=30µ Cp=3p,3p,30µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=40µ Cp=3p,3p,40µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=50µ Cp=3p,3p,50µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=60µ Cp=3p,3p,60µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=70µ Cp=3p,3p,70µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=80µ Cp=3p,3p,80µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=90µ Cp=3p,3p,90µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB
+V(pas+),Itail=100µ Cp=3p,3p,100µ,210.0,-9.056509496402905,2.967525624193895,,,notch shallower than 3 dB

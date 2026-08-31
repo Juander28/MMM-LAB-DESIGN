@@ -1,0 +1,52 @@
+v {xschem version=3.4.8RC file_version=1.3
+* IGZO TFT output characteristics - UCI/INRF process (igzo_mmm_lab)
+*
+* Sweeps Id against Vds at several Vgs on the device the model was validated
+* against: W = 1000 um, L = 8 um.  At Vgs = 6 V, Vds = 10 V the measurement
+* gives 670-701 uA and this netlist gives ~654 uA.
+*
+* Both limits of the model are visible here: it is DC-only, and it is valid
+* for Vgs <= 6 V and Vds <= 10 V.  The sweep deliberately stops there.
+}
+G {}
+K {}
+V {}
+S {}
+F {}
+E {}
+N 350 -230 380 -230 {lab=0}
+N 380 -230 380 -220 {lab=0}
+N 30 -270 50 -270 {lab=INP}
+N 30 -250 50 -250 {lab=INN}
+N 350 -250 390 -250 {lab=OUT}
+C {devices/code_shown.sym} 20 -160 0 0 {name=MODELS only_toplevel=true
+format="tcleval( @value )"
+value="
+.include $::IGZO_MODELS/design.ngspice
+.lib $::IGZO_MODELS/igzo_mmm_lab.ngspice best
+"}
+C {devices/lab_pin.sym} 30 -250 0 0 {name=l1 sig_type=std_logic lab=INN}
+C {devices/lab_pin.sym} 350 -270 2 0 {name=l2 sig_type=std_logic lab=VDD}
+C {devices/lab_pin.sym} 30 -270 0 0 {name=l3 sig_type=std_logic lab=INP}
+C {devices/code_shown.sym} 940 -320 0 1 {name=NGSPICE only_toplevel=true
+value="
+.control
+save all
+dc V4 -10 10 0.1 
+plot v(OUT)
+plot v(v1.net2)
+.endc
+"}
+C {devices/title.sym} 160 -30 0 0 {name=l5 author="UCI/INRF - MMM Lab"}
+C {vsource.sym} 130 -430 0 0 {name=V1 value=6 savecurrent=false}
+C {gnd.sym} 130 -400 0 0 {name=l8 lab=0}
+C {devices/lab_pin.sym} 130 -460 2 0 {name=l7 sig_type=std_logic lab=VDD}
+C {vsource.sym} 230 -430 0 0 {name=V3 value=2.5 savecurrent=false}
+C {gnd.sym} 230 -400 0 0 {name=l11 lab=0}
+C {vsource.sym} 275 -430 0 0 {name=V4 value=2.5 savecurrent=false}
+C {gnd.sym} 380 -225 0 0 {name=l17 lab=0}
+C {devices/lab_pin.sym} 230 -460 2 0 {name=l12 sig_type=std_logic lab=INP}
+C {devices/lab_pin.sym} 275 -460 2 0 {name=l13 sig_type=std_logic lab=INN}
+C {devices/lab_pin.sym} 275 -400 2 0 {name=l14 sig_type=std_logic lab=INP}
+C {MMM-LAB DESIGN/OPAM/OPAM2.sym} 200 -250 0 0 {name=x1}
+C {devices/lab_pin.sym} 385 -250 2 0 {name=l4 sig_type=std_logic lab=OUT}

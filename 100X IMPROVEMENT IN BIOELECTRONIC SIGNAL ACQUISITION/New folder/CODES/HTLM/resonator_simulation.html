@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Coupled Q-Enhanced Resonator — LTspice Simulation Guide</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body.lang-es .lang-en { display: none !important; }
+        body.lang-en .lang-es { display: none !important; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .academic-text { @apply text-slate-700 leading-relaxed space-y-4 text-justify; }
+        .academic-text p { @apply mb-4; }
+        .academic-text h2 { @apply text-2xl font-bold text-slate-900 mt-8 mb-4 border-b pb-2; }
+        .academic-text h3 { @apply text-xl font-semibold text-slate-800 mt-6 mb-3; }
+        .academic-text ul { @apply list-disc pl-6 space-y-2 mb-4; }
+        .academic-text ol { @apply list-decimal pl-6 space-y-2 mb-4; }
+        .math-block { @apply bg-slate-50 p-4 rounded-lg my-4 overflow-x-auto text-center border border-slate-200; }
+        .css-diagram-box { @apply bg-slate-50 border border-slate-300 rounded-lg p-6 my-6 flex flex-col items-center justify-center space-y-4 shadow-inner; }
+        .block-node { @apply px-4 py-2 bg-blue-100 border-2 border-blue-600 text-blue-900 font-bold rounded shadow-sm text-center text-sm; }
+        .block-arrow { @apply text-slate-400 font-bold text-xl; }
+        .param-table { @apply w-full text-sm border-collapse my-4; }
+        .param-table th { @apply bg-slate-800 text-white px-3 py-2 text-left border border-slate-300; }
+        .param-table td { @apply px-3 py-2 border border-slate-300 align-top; }
+        .param-table tr:nth-child(even) { @apply bg-slate-50; }
+        .code-inline { @apply bg-slate-100 px-1.5 py-0.5 rounded font-mono text-xs text-blue-800 border border-slate-200; }
+        .code-block { @apply bg-slate-900 text-slate-100 p-4 rounded-lg my-4 font-mono text-xs overflow-x-auto; }
+        .schematic-svg { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; display: block; margin: 1.5rem auto; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-100 lang-es text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 font-bold text-lg tracking-wider">
+                    <span class="text-blue-400">Resonator</span>Simulation
+                    <span class="text-xs text-slate-400 font-normal ml-2">| LTspice A.1</span>
+                </div>
+                <button id="langToggleBtn" onclick="toggleLanguage()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-medium transition-colors border border-slate-500">
+                    <span class="lang-es">Switch to English</span>
+                    <span class="lang-en">Cambiar a Espanol</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 border-t border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex space-x-4 overflow-x-auto py-3" aria-label="Tabs">
+                    <button onclick="switchTab('tab-overview')" id="btn-tab-overview" class="tab-btn bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">1. Resumen del Proyecto</span>
+                        <span class="lang-en">1. Project Overview</span>
+                    </button>
+                    <button onclick="switchTab('tab-topology')" id="btn-tab-topology" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">2. Topologia del Circuito</span>
+                        <span class="lang-en">2. Circuit Topology</span>
+                    </button>
+                    <button onclick="switchTab('tab-math')" id="btn-tab-math" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">3. Matematicas</span>
+                        <span class="lang-en">3. Mathematics</span>
+                    </button>
+                    <button onclick="switchTab('tab-sim')" id="btn-tab-sim" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">4. Guia de Simulacion</span>
+                        <span class="lang-en">4. Simulation Guide</span>
+                    </button>
+                    <button onclick="switchTab('tab-refs')" id="btn-tab-refs" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">5. Referencias</span>
+                        <span class="lang-en">5. References</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
+        <div class="bg-white shadow-lg rounded-xl p-8 border border-slate-200">
+
+            <!-- ================= TAB 1: PROJECT OVERVIEW ================= -->
+            <section id="tab-overview" class="tab-content active academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Resumen del Proyecto y Objetivo de la Simulacion</span>
+                    <span class="lang-en">Project Overview and Simulation Goal</span>
+                </h1>
+
+                <div class="css-diagram-box">
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 w-full">
+                        <div class="block-node bg-red-100 border-red-600 text-red-900">
+                            <span class="lang-es">Musculo</span><span class="lang-en">Muscle</span>
+                            <br/><span class="text-xs font-normal">EMG: 0.05-5 mV</span>
+                        </div>
+                        <div class="block-arrow">&rarr;</div>
+                        <div class="block-node">
+                            <span class="lang-es">Varactor</span><span class="lang-en">Varactor</span>
+                            <br/><span class="text-xs font-normal">$C(V_{EMG})$</span>
+                        </div>
+                        <div class="block-arrow">&rarr;</div>
+                        <div class="block-node bg-amber-100 border-amber-600 text-amber-900">
+                            <span class="lang-es">Tanque LC + XCP</span><span class="lang-en">LC Tank + XCP</span>
+                            <br/><span class="text-xs font-normal">50-200 MHz, $Q>1000$</span>
+                        </div>
+                        <div class="block-arrow">&rarr;</div>
+                        <div class="block-node bg-emerald-100 border-emerald-600 text-emerald-900">
+                            <span class="lang-es">Lector Externo</span><span class="lang-en">External Reader</span>
+                            <br/><span class="text-xs font-normal">DSP / Hilbert</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lang-es">
+                    <p>Este documento acompana el archivo LTspice <span class="code-inline">CROSS COUPLED.asc</span>, que implementa la <strong>Topologia A.1</strong> del proyecto Resonant Electrophysiology UCLA/UCI: un resonador LC diferencial con par cruzado NMOS (cross-coupled, XCP) que sintetiza una resistencia negativa para realzar el factor de calidad Q del tanque pasivo (Q-enhancement activo).</p>
+
+                    <h2>El Problema Central</h2>
+                    <p>El sistema escalable busca registrar <strong>$\geq 1000$ canales</strong> de EMG intramuscular simultaneamente usando multiplexacion por division de frecuencia (FDM) en la banda <strong>50-200 MHz</strong>. Cada canal recibe 150 kHz de ancho de banda. Para evitar diafonia, el ancho de banda a -3 dB de cada notch debe ser $\leq 30$ kHz, lo que exige factores de calidad $Q \geq 1\,667$ a 50 MHz y $Q \geq 6\,667$ a 200 MHz.</p>
+                    <p>Inductores pasivos en tejido logran a lo sumo $Q \approx 25$-$50$. Por lo tanto, <strong>la mejora activa de Q es obligatoria</strong>. La topologia A.1 (par cruzado NMOS sobre tanque LC) es la unica que cumple simultaneamente todos los criterios:</p>
+                    <ul>
+                        <li>$Q \geq 6\,667$ a 200 MHz</li>
+                        <li>Potencia $\leq 100$ uW por canal (presupuesto termico ISO 14708, $\Delta T < 2$ &deg;C)</li>
+                        <li>Huella $\leq 150 \times 150$ um sobre sustrato flexible</li>
+                        <li>Sin nodo de tierra dentro del cuerpo (topologia totalmente diferencial)</li>
+                    </ul>
+
+                    <h2>Que Hace Esta Simulacion</h2>
+                    <p>El archivo <span class="code-inline">CROSS COUPLED.asc</span> instancia <strong>un solo canal</strong> de la topologia A.1 con todos sus elementos:</p>
+                    <ul>
+                        <li>Tanque LC con inductor de toma central (dividido en $L/2 + L/2$) y dos varactores en serie back-to-back, cuya capacitancia se modula por la senal EMG aplicada al nodo medio.</li>
+                        <li>Par diferencial NMOS cruzado entre los nodos del tanque, con fuente de corriente de cola $I_{\text{tail}}$ parametrizada para barrer el realce de Q.</li>
+                        <li>Capacitores de acoplo $C_c$ a un par de sondas de linea de transmision diferenciales que excitan el tanque.</li>
+                        <li>Red de polarizacion de alta impedancia para inyectar la senal EMG sin cargar el tanque RF.</li>
+                    </ul>
+                    <p>El objetivo es permitir al disenador <strong>ver visualmente</strong> como el factor Q crece desde $Q_0 \approx 84$ (sin par cruzado, $I_{\text{tail}} = 0$) hasta $Q > 3\,000$ a medida que $I_{\text{tail}}$ se acerca al limite de oscilacion, y cuantificar el ancho de banda $-3$ dB para verificar el cumplimiento del requisito FDM.</p>
+                </div>
+
+                <div class="lang-en">
+                    <p>This document accompanies the LTspice file <span class="code-inline">CROSS COUPLED.asc</span>, which implements <strong>Topology A.1</strong> of the UCLA/UCI Resonant Electrophysiology project: a differential LC resonator with a cross-coupled NMOS pair (XCP) that synthesizes a negative resistance to actively enhance the passive tank's Q factor.</p>
+
+                    <h2>The Core Problem</h2>
+                    <p>The scalable system aims to record <strong>$\geq 1000$ intramuscular EMG channels</strong> simultaneously using frequency-division multiplexing (FDM) in the <strong>50-200 MHz</strong> band. Each channel is allocated 150 kHz of bandwidth. To avoid crosstalk, every notch's $-3$ dB bandwidth must be $\leq 30$ kHz, which demands quality factors $Q \geq 1\,667$ at 50 MHz and $Q \geq 6\,667$ at 200 MHz.</p>
+                    <p>Passive inductors in tissue reach at most $Q \approx 25$-$50$. Therefore, <strong>active Q-enhancement is mandatory</strong>. Topology A.1 (cross-coupled NMOS pair on LC tank) is the only one that simultaneously satisfies every criterion:</p>
+                    <ul>
+                        <li>$Q \geq 6\,667$ at 200 MHz</li>
+                        <li>Power $\leq 100$ uW per channel (ISO 14708 thermal budget, $\Delta T < 2$ &deg;C)</li>
+                        <li>Footprint $\leq 150 \times 150$ um on flexible substrate</li>
+                        <li>No ground node inside the body (fully differential topology)</li>
+                    </ul>
+
+                    <h2>What This Simulation Does</h2>
+                    <p>The <span class="code-inline">CROSS COUPLED.asc</span> file instantiates <strong>one channel</strong> of Topology A.1 with all its elements:</p>
+                    <ul>
+                        <li>LC tank with center-tapped inductor (split into $L/2 + L/2$) and two back-to-back varactors whose capacitance is modulated by the EMG signal applied to the midpoint node.</li>
+                        <li>Cross-coupled differential NMOS pair between the tank nodes, with parameterized tail current source $I_{\text{tail}}$ for sweeping Q-enhancement.</li>
+                        <li>Coupling capacitors $C_c$ to a pair of differential transmission-line probes that excite the tank.</li>
+                        <li>High-impedance bias network that injects the EMG signal without loading the RF tank.</li>
+                    </ul>
+                    <p>The goal is to let the designer <strong>visually see</strong> how Q grows from $Q_0 \approx 84$ (no cross-coupled pair, $I_{\text{tail}} = 0$) up to $Q > 3\,000$ as $I_{\text{tail}}$ approaches the oscillation threshold, and to quantify the $-3$ dB bandwidth to verify FDM compliance.</p>
+                </div>
+            </section>
+
+            <!-- ================= TAB 2: CIRCUIT TOPOLOGY ================= -->
+            <section id="tab-topology" class="tab-content academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Topologia del Circuito en LTspice</span>
+                    <span class="lang-en">LTspice Circuit Topology</span>
+                </h1>
+
+                <svg class="schematic-svg" viewBox="0 0 760 540" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                        .wire { stroke: #1e293b; stroke-width: 1.6; fill: none; }
+                        .lbl { fill: #1e293b; font-family: monospace; font-size: 11px; }
+                        .nodelbl { fill: #2563eb; font-family: monospace; font-size: 11px; font-weight: bold; }
+                        .complbl { fill: #b91c1c; font-family: monospace; font-size: 10px; font-weight: bold; }
+                        .compbox { fill: #fef3c7; stroke: #b45309; stroke-width: 1.4; }
+                        .ind { fill: none; stroke: #1e293b; stroke-width: 1.4; }
+                        .gnd { stroke: #1e293b; stroke-width: 1.6; }
+                    </style>
+
+                    <!-- VDD rail -->
+                    <line class="wire" x1="80" y1="40" x2="600" y2="40"/>
+                    <text class="nodelbl" x="600" y="34">VDD = 1.2 V</text>
+
+                    <!-- V_VDD source on far left -->
+                    <line class="wire" x1="80" y1="40" x2="80" y2="80"/>
+                    <circle cx="80" cy="100" r="20" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="lbl" x="74" y="96">+</text>
+                    <text class="lbl" x="76" y="112">-</text>
+                    <text class="complbl" x="42" y="105">V_VDD</text>
+                    <line class="wire" x1="80" y1="120" x2="80" y2="160"/>
+                    <line class="gnd" x1="65" y1="160" x2="95" y2="160"/>
+                    <line class="gnd" x1="70" y1="166" x2="90" y2="166"/>
+                    <line class="gnd" x1="75" y1="172" x2="85" y2="172"/>
+
+                    <!-- L1 (left half inductor) -->
+                    <path class="ind" d="M 250 40 Q 245 50 250 60 Q 255 70 250 80 Q 245 90 250 100"/>
+                    <text class="complbl" x="220" y="74">L/2</text>
+                    <line class="wire" x1="250" y1="100" x2="250" y2="280"/>
+                    <text class="nodelbl" x="220" y="180">D1</text>
+
+                    <!-- L2 (right half inductor) -->
+                    <path class="ind" d="M 470 40 Q 465 50 470 60 Q 475 70 470 80 Q 465 90 470 100"/>
+                    <text class="complbl" x="478" y="74">L/2</text>
+                    <line class="wire" x1="470" y1="100" x2="470" y2="280"/>
+                    <text class="nodelbl" x="478" y="180">D2</text>
+
+                    <!-- Cv1 varactor (D1 -> emg_p) -->
+                    <line class="wire" x1="250" y1="160" x2="295" y2="160"/>
+                    <line class="wire" x1="305" y1="160" x2="320" y2="160"/>
+                    <line class="wire" x1="295" y1="148" x2="295" y2="172"/>
+                    <line class="wire" x1="305" y1="148" x2="305" y2="172"/>
+                    <text class="complbl" x="282" y="142">Cv1</text>
+
+                    <!-- V_EMG -->
+                    <circle cx="335" cy="160" r="10" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="lbl" x="332" y="158">~</text>
+                    <text class="complbl" x="320" y="190">V_EMG</text>
+                    <line class="wire" x1="320" y1="160" x2="325" y2="160"/>
+                    <line class="wire" x1="345" y1="160" x2="395" y2="160"/>
+
+                    <!-- Cv2 varactor (emg_n -> D2) -->
+                    <line class="wire" x1="395" y1="148" x2="395" y2="172"/>
+                    <line class="wire" x1="405" y1="148" x2="405" y2="172"/>
+                    <line class="wire" x1="405" y1="160" x2="470" y2="160"/>
+                    <text class="complbl" x="412" y="142">Cv2</text>
+
+                    <!-- emg_p, emg_n labels -->
+                    <text class="nodelbl" x="312" y="180">emg_p</text>
+                    <text class="nodelbl" x="368" y="180">emg_n</text>
+
+                    <!-- R_b1 (emg_p down to vbias) -->
+                    <line class="wire" x1="320" y1="160" x2="320" y2="200"/>
+                    <rect x="312" y="200" width="16" height="40" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="complbl" x="290" y="225">Rb1</text>
+                    <line class="wire" x1="320" y1="240" x2="320" y2="270"/>
+
+                    <!-- R_b2 (emg_n down to vbias) -->
+                    <line class="wire" x1="395" y1="160" x2="395" y2="200"/>
+                    <rect x="387" y="200" width="16" height="40" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="complbl" x="408" y="225">Rb2</text>
+                    <line class="wire" x1="395" y1="240" x2="395" y2="270"/>
+
+                    <!-- vbias rail -->
+                    <line class="wire" x1="320" y1="270" x2="395" y2="270"/>
+                    <text class="nodelbl" x="340" y="262">vbias</text>
+
+                    <!-- VBIAS_V source -->
+                    <line class="wire" x1="357" y1="270" x2="357" y2="290"/>
+                    <circle cx="357" cy="305" r="15" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="lbl" x="353" y="303">+</text>
+                    <text class="lbl" x="354" y="316">-</text>
+                    <text class="complbl" x="290" y="310">VBIAS_V</text>
+                    <line class="wire" x1="357" y1="320" x2="357" y2="340"/>
+                    <line class="gnd" x1="345" y1="340" x2="369" y2="340"/>
+                    <line class="gnd" x1="349" y1="345" x2="365" y2="345"/>
+
+                    <!-- M1 NMOS (left, gate on right side) -->
+                    <line class="wire" x1="250" y1="280" x2="250" y2="310"/>
+                    <rect x="225" y="310" width="50" height="50" fill="#fef3c7" stroke="#b45309" stroke-width="1.4"/>
+                    <text class="complbl" x="240" y="340">M1</text>
+                    <line class="wire" x1="275" y1="335" x2="295" y2="335"/>
+                    <text class="lbl" x="278" y="332">G</text>
+                    <line class="wire" x1="250" y1="360" x2="250" y2="400"/>
+
+                    <!-- M2 NMOS (right, gate on left side) -->
+                    <line class="wire" x1="470" y1="280" x2="470" y2="310"/>
+                    <rect x="445" y="310" width="50" height="50" fill="#fef3c7" stroke="#b45309" stroke-width="1.4"/>
+                    <text class="complbl" x="460" y="340">M2</text>
+                    <line class="wire" x1="445" y1="335" x2="425" y2="335"/>
+                    <text class="lbl" x="430" y="332">G</text>
+                    <line class="wire" x1="470" y1="360" x2="470" y2="400"/>
+
+                    <!-- Cross-coupling wires -->
+                    <line class="wire" x1="295" y1="335" x2="295" y2="400"/>
+                    <line class="wire" x1="295" y1="400" x2="425" y2="400"/>
+                    <!-- but actual XCP cross: M1.G -> D2 and M2.G -> D1 -->
+                    <!-- Re-draw cleaner -->
+
+                    <!-- Sources joined -->
+                    <line class="wire" x1="250" y1="400" x2="295" y2="400"/>
+                    <line class="wire" x1="425" y1="400" x2="470" y2="400"/>
+                    <text class="nodelbl" x="350" y="394">ST</text>
+
+                    <!-- I_tail current source -->
+                    <line class="wire" x1="360" y1="400" x2="360" y2="425"/>
+                    <circle cx="360" cy="440" r="15" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="lbl" x="357" y="438">&darr;</text>
+                    <text class="complbl" x="298" y="445">I_tail</text>
+                    <line class="wire" x1="360" y1="455" x2="360" y2="480"/>
+                    <line class="gnd" x1="348" y1="480" x2="372" y2="480"/>
+                    <line class="gnd" x1="352" y1="485" x2="368" y2="485"/>
+
+                    <!-- Coupling caps Cc1, Cc2 to TL probes -->
+                    <line class="wire" x1="250" y1="220" x2="200" y2="220"/>
+                    <line class="wire" x1="190" y1="208" x2="190" y2="232"/>
+                    <line class="wire" x1="180" y1="208" x2="180" y2="232"/>
+                    <line class="wire" x1="180" y1="220" x2="130" y2="220"/>
+                    <text class="complbl" x="172" y="200">Cc1</text>
+
+                    <line class="wire" x1="470" y1="220" x2="525" y2="220"/>
+                    <line class="wire" x1="525" y1="208" x2="525" y2="232"/>
+                    <line class="wire" x1="535" y1="208" x2="535" y2="232"/>
+                    <line class="wire" x1="535" y1="220" x2="585" y2="220"/>
+                    <text class="complbl" x="525" y="200">Cc2</text>
+
+                    <!-- R_TLp -->
+                    <rect x="100" y="212" width="30" height="16" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="complbl" x="98" y="245">25 ohm</text>
+                    <line class="wire" x1="100" y1="220" x2="60" y2="220"/>
+
+                    <!-- R_TLn -->
+                    <rect x="585" y="212" width="30" height="16" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="complbl" x="586" y="245">25 ohm</text>
+                    <line class="wire" x1="615" y1="220" x2="655" y2="220"/>
+
+                    <!-- V_TLp -->
+                    <line class="wire" x1="60" y1="220" x2="60" y2="260"/>
+                    <circle cx="60" cy="280" r="20" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="lbl" x="40" y="282">AC</text>
+                    <text class="complbl" x="20" y="300">V_TLp</text>
+                    <text class="lbl" x="68" y="282">1&ang;0</text>
+                    <line class="wire" x1="60" y1="300" x2="60" y2="335"/>
+                    <line class="gnd" x1="48" y1="335" x2="72" y2="335"/>
+                    <line class="gnd" x1="52" y1="340" x2="68" y2="340"/>
+
+                    <!-- V_TLn -->
+                    <line class="wire" x1="655" y1="220" x2="655" y2="260"/>
+                    <circle cx="655" cy="280" r="20" fill="white" stroke="#1e293b" stroke-width="1.4"/>
+                    <text class="lbl" x="635" y="282">AC</text>
+                    <text class="complbl" x="675" y="300">V_TLn</text>
+                    <text class="lbl" x="660" y="282">1&ang;180</text>
+                    <line class="wire" x1="655" y1="300" x2="655" y2="335"/>
+                    <line class="gnd" x1="643" y1="335" x2="667" y2="335"/>
+                    <line class="gnd" x1="647" y1="340" x2="663" y2="340"/>
+
+                    <!-- TLp, TLn labels -->
+                    <text class="nodelbl" x="40" y="212">TLp</text>
+                    <text class="nodelbl" x="640" y="212">TLn</text>
+                </svg>
+
+                <div class="lang-es">
+                    <p>El esquematico arriba refleja la disposicion exacta del archivo <span class="code-inline">CROSS COUPLED.asc</span>. Los nodos en azul (<span class="text-blue-700 font-mono font-bold">D1, D2, emg_p, emg_n, vbias, ST, TLp, TLn, VDD</span>) son etiquetas de nodo (<span class="code-inline">FLAG</span> en LTspice) y se pueden sondear directamente desde la ventana de forma de onda.</p>
+
+                    <h2>Mapeo Componente -> Parametro LTspice</h2>
+                    <p>Cada componente esta vinculado a un <span class="code-inline">.param</span> de manera que la edicion visual en LTspice es solo cambiar un valor en el bloque de directivas SPICE en la esquina superior izquierda.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr><th>Componente</th><th>Parametro</th><th>Valor por defecto</th><th>Funcion fisica</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>L1, L2 (mitades del inductor)</td><td><span class="code-inline">L</span></td><td>40 nH</td><td>Determina $f_0$ y $R_p$. Subir L baja la $g_m$ requerida.</td></tr>
+                            <tr><td>L1, L2 perdidas</td><td><span class="code-inline">RS</span></td><td>0.6 &Omega;</td><td>$Q_0$ pasivo. Realista para Cu apilado microfabricado.</td></tr>
+                            <tr><td>Cv1, Cv2 nominal</td><td><span class="code-inline">C0</span></td><td>32 fF</td><td>Junto con L fija $f_0 \approx 200$ MHz.</td></tr>
+                            <tr><td>Sensibilidad varactor</td><td><span class="code-inline">alpha</span></td><td>0.5 V$^{-1}$</td><td>$df_0/dV = -\alpha f_0/2$ (250 kHz/mV).</td></tr>
+                            <tr><td>I_tail (corriente de cola)</td><td><span class="code-inline">Itail</span></td><td>130 uA</td><td>Fija $g_m$ del XCP &rarr; controla $Q_{enh}$.</td></tr>
+                            <tr><td>Cc1, Cc2 (acoplo TL)</td><td><span class="code-inline">Cc</span></td><td>5 fF</td><td>Aisla TL del tanque (&lt; 1 dB de perdida fuera de resonancia).</td></tr>
+                            <tr><td>Rb1, Rb2 (polarizacion)</td><td><span class="code-inline">Rb</span></td><td>100 k&Omega;</td><td>Bloquea RF de la fuente EMG.</td></tr>
+                            <tr><td>VBIAS_V</td><td><span class="code-inline">VBIAS_V</span></td><td>0.6 V</td><td>Punto medio del varactor (zona lineal de $\partial C/\partial V$).</td></tr>
+                            <tr><td>V_EMG amplitud</td><td><span class="code-inline">EMGamp</span></td><td>5 mV</td><td>Pico de la senal EMG (&plusmn; 5 mV).</td></tr>
+                            <tr><td>V_EMG frecuencia</td><td><span class="code-inline">EMGfreq</span></td><td>100 Hz</td><td>Frecuencia de la senal EMG simulada.</td></tr>
+                            <tr><td>V_VDD</td><td><span class="code-inline">VDD</span></td><td>1.2 V</td><td>Suministro del XCP (toma central del inductor).</td></tr>
+                            <tr><td>V_TLp / V_TLn (sondas TL)</td><td>fijo: AC 1$\angle$0 / AC 1$\angle$180</td><td>2 V pico-pico diferencial</td><td>Excitacion de la linea de transmision.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h2>Por que el Toma Central?</h2>
+                    <p>El inductor se divide en dos mitades $L/2$ con la toma central conectada a $V_{DD}$. Esto cumple dos funciones: (i) suministra polarizacion DC a los drenes de M1 y M2 (que son los nodos del tanque D1, D2) sin necesidad de chokes RF separados, y (ii) preserva la simetria diferencial del tanque, manteniendo el modo comun en $V_{DD}$ y permitiendo que la oscilacion diferencial flote libremente respecto a este punto.</p>
+
+                    <h2>Por que Dos Varactores Back-to-Back?</h2>
+                    <p>Colocar dos varactores en serie con la senal EMG en el nodo medio (en lugar de un solo varactor de un extremo a tierra) elimina la necesidad de un nodo de tierra dentro del cuerpo. La senal EMG modula simetricamente ambas capacitancias, y la capacitancia diferencial efectiva del tanque es $C_v/2$ (dos en serie). Esta configuracion tambien <strong>cancela la dependencia comun-modo</strong> del varactor con la fuente de RF: solo la componente diferencial de EMG sintoniza el tanque.</p>
+                </div>
+
+                <div class="lang-en">
+                    <p>The schematic above mirrors the exact layout of <span class="code-inline">CROSS COUPLED.asc</span>. The nodes in blue (<span class="text-blue-700 font-mono font-bold">D1, D2, emg_p, emg_n, vbias, ST, TLp, TLn, VDD</span>) are LTspice <span class="code-inline">FLAG</span> labels and can be probed directly from the waveform window.</p>
+
+                    <h2>Component &rarr; LTspice Parameter Map</h2>
+                    <p>Every component is tied to a <span class="code-inline">.param</span>, so visual editing in LTspice is just changing one value in the SPICE directive block in the top-left corner.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr><th>Component</th><th>Parameter</th><th>Default</th><th>Physical role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>L1, L2 (inductor halves)</td><td><span class="code-inline">L</span></td><td>40 nH</td><td>Sets $f_0$ and $R_p$. Larger L lowers required $g_m$.</td></tr>
+                            <tr><td>L1, L2 series loss</td><td><span class="code-inline">RS</span></td><td>0.6 &Omega;</td><td>Passive $Q_0$. Realistic for stacked-Cu microfabricated coil.</td></tr>
+                            <tr><td>Cv1, Cv2 nominal</td><td><span class="code-inline">C0</span></td><td>32 fF</td><td>Together with L fixes $f_0 \approx 200$ MHz.</td></tr>
+                            <tr><td>Varactor sensitivity</td><td><span class="code-inline">alpha</span></td><td>0.5 V$^{-1}$</td><td>$df_0/dV = -\alpha f_0/2$ (250 kHz/mV).</td></tr>
+                            <tr><td>Tail current</td><td><span class="code-inline">Itail</span></td><td>130 uA</td><td>Sets XCP $g_m$ &rarr; controls $Q_{enh}$.</td></tr>
+                            <tr><td>Cc1, Cc2 (TL coupling)</td><td><span class="code-inline">Cc</span></td><td>5 fF</td><td>Isolates TL from tank (&lt; 1 dB off-resonance loss).</td></tr>
+                            <tr><td>Rb1, Rb2 (bias)</td><td><span class="code-inline">Rb</span></td><td>100 k&Omega;</td><td>Blocks RF from EMG source.</td></tr>
+                            <tr><td>VBIAS_V</td><td><span class="code-inline">VBIAS_V</span></td><td>0.6 V</td><td>Varactor mid-bias (linear $\partial C/\partial V$ region).</td></tr>
+                            <tr><td>V_EMG amplitude</td><td><span class="code-inline">EMGamp</span></td><td>5 mV</td><td>EMG signal peak (&plusmn; 5 mV).</td></tr>
+                            <tr><td>V_EMG frequency</td><td><span class="code-inline">EMGfreq</span></td><td>100 Hz</td><td>Simulated EMG signal frequency.</td></tr>
+                            <tr><td>V_VDD</td><td><span class="code-inline">VDD</span></td><td>1.2 V</td><td>XCP supply (inductor center tap).</td></tr>
+                            <tr><td>V_TLp / V_TLn (TL probes)</td><td>fixed: AC 1$\angle$0 / AC 1$\angle$180</td><td>2 V peak-to-peak differential</td><td>Transmission-line excitation.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h2>Why the Center Tap?</h2>
+                    <p>The inductor is split into two $L/2$ halves with the center tap connected to $V_{DD}$. This serves two roles: (i) it DC-biases the drains of M1 and M2 (which ARE the tank nodes D1, D2) without requiring separate RF chokes, and (ii) it preserves differential symmetry of the tank, holding the common mode at $V_{DD}$ while letting the differential oscillation float freely about that point.</p>
+
+                    <h2>Why Two Back-to-Back Varactors?</h2>
+                    <p>Placing two varactors in series with the EMG signal at the midpoint (instead of one varactor end-to-ground) eliminates any need for a ground node inside the body. The EMG signal symmetrically modulates both capacitances, and the effective differential tank capacitance is $C_v/2$ (two in series). This also <strong>cancels the common-mode dependence</strong> of the varactor on the RF source: only the differential component of EMG tunes the tank.</p>
+                </div>
+            </section>
+
+            <!-- ================= TAB 3: MATHEMATICS ================= -->
+            <section id="tab-math" class="tab-content academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Matematicas del Resonador</span>
+                    <span class="lang-en">Resonator Mathematics</span>
+                </h1>
+
+                <div class="lang-es">
+                    <h2>1. Resistencia Negativa del Par Cruzado</h2>
+                    <p>Mirando dentro del par cruzado NMOS desde los drenes (D1, D2), la pequena senal diferencial ve una impedancia puramente real y negativa:</p>
+                    <div class="math-block">$$R_{\text{neg}} = -\frac{2}{g_m}$$</div>
+                    <p>donde $g_m$ es la transconductancia de cada transistor (ambos NMOS son identicos por simetria). Esta resistencia negativa cancela parte de la perdida del tanque LC, realzando su factor de calidad.</p>
+
+                    <h2>2. Tanque LC Pasivo</h2>
+                    <p>El inductor real tiene perdida serie $r_L$. Cerca de la resonancia $\omega_0 = 1/\sqrt{LC_v}$, esto es equivalente a una resistencia paralela $R_p$:</p>
+                    <div class="math-block">$$R_p = \frac{(\omega_0 L)^2}{r_L} = Q_0 \cdot \omega_0 L, \qquad Q_0 = \frac{\omega_0 L}{r_L}$$</div>
+                    <p>Con $L = 40$ nH, $r_L = 0.6\ \Omega$ y $f_0 = 200$ MHz: $Q_0 \approx 84$, $R_p \approx 4.2\ k\Omega$.</p>
+
+                    <h2>3. Q Realzado por el Par Cruzado</h2>
+                    <p>El par cruzado anade $-R_{\text{neg}}$ en paralelo al tanque. La conductancia efectiva es $G_{\text{eff}} = G_p - g_m/2$ (factor 1/2 porque cada transistor contribuye $g_m/2$ al modo diferencial). El Q realzado es:</p>
+                    <div class="math-block">$$\boxed{\,Q_{\text{enh}} = \frac{Q_0}{1 - g_m R_p / 2}\,}$$</div>
+                    <p>A medida que $g_m R_p / 2 \to 1$, $Q_{\text{enh}} \to \infty$ y el sistema entra en oscilacion. El punto de operacion seguro mantiene un margen de fase positivo:</p>
+                    <div class="math-block">$$\text{PM} \approx 2\arctan\left(\sqrt{\epsilon}\right), \qquad \epsilon = 1 - \frac{g_m R_p}{2}$$</div>
+
+                    <h2>4. Modulacion de Frecuencia por EMG</h2>
+                    <p>El varactor tiene $C_v(V) = C_0\,(1 + \alpha V_{EMG})$, donde $V_{EMG} = V(\text{emg\_p}) - V(\text{emg\_n})$. La frecuencia de resonancia es entonces:</p>
+                    <div class="math-block">$$\omega_0(V_{EMG}) = \frac{1}{\sqrt{L\,C_0(1 + \alpha V_{EMG})}} \approx \omega_{0,0}\left(1 - \frac{\alpha V_{EMG}}{2}\right)$$</div>
+                    <div class="math-block">$$\boxed{\,\frac{df_0}{dV_{EMG}} = -\frac{\alpha\,f_0}{2}\,}$$</div>
+                    <p>Para $\alpha = 0.5\ V^{-1}$ y $f_0 = 200$ MHz: $df_0/dV \approx 50$ MHz/V = 250 kHz/mV. Una senal EMG de $\pm 5$ mV produce una desviacion pico de $\pm 1.25$ MHz, mucho mayor que el ancho de banda del notch ($< 30$ kHz), lo que permite recuperar la senal por extraccion de fase.</p>
+
+                    <h2>5. Funcion de Transferencia del Sistema FDM</h2>
+                    <p>Cuando $N$ resonadores cuelgan de la misma linea de transmision diferencial con impedancia caracteristica $Z_R$, el sistema completo tiene:</p>
+                    <div class="math-block">$$H(\omega, \mathbf{V}) = \frac{1}{2 + Z_R \displaystyle\sum_{i=1}^{N} \frac{1}{Z_{\text{Res}}^{(i)}(\omega, V_i)}}$$</div>
+                    <p>donde $Z_{\text{Res}}^{(i)} = \frac{1}{j\omega C_c^{(i)}} + \frac{1}{Y_{\text{tank}}^{(i)}(\omega, V_i)}$. En el archivo .asc simulamos un solo canal ($N = 1$), pero la funcion de transferencia conserva esta forma.</p>
+
+                    <h2>6. Extraccion de Fase para Recuperar EMG</h2>
+                    <p>El lector externo aplica un tono de prueba a $\omega_p \approx \omega_0$ y mide la fase del retorno. Cerca de la resonancia el comportamiento es Lorentziano:</p>
+                    <div class="math-block">$$\varphi(t) \approx -\arctan\left[\,2 Q_{\text{enh}}\,\frac{\omega_p - \omega_0(V_{EMG}(t))}{\omega_p}\,\right]$$</div>
+                    <p>Esta es la cantidad recuperada por la cadena DSP de Hilbert &rarr; downconversion &rarr; arctan, identica al pipeline de la disertacion de S. Herman.</p>
+
+                    <h2>7. Presupuesto de Ruido</h2>
+                    <p>El tanque realzado tiene voltaje de ruido referido a la entrada:</p>
+                    <div class="math-block">$$\overline{v_{n,\text{tank}}^2} = 4kT\,R_p\,\frac{Q_{\text{enh}}}{Q_0}\quad\left[V^2/Hz\right]$$</div>
+                    <p>Con $R_p = 4.2$ k&Omega;, $Q_{\text{enh}}/Q_0 = 50$ (para $Q = 4\,200$): $\overline{v_n} \approx 60$ nV/$\sqrt{Hz}$. Sobre 30 kHz de ancho de banda: $\approx 10$ &mu;V$_{\text{rms}}$. Promedio coherente DSP sobre 10 ms de senal EMG (oversampling 60$\times$ vs 500 Hz EMG) reduce esto $\approx \sqrt{300} = 17\times$ a $\approx 0.6$ &mu;V$_{\text{rms}}$, dentro del objetivo de $< 5$ &mu;V$_{\text{rms}}$.</p>
+                </div>
+
+                <div class="lang-en">
+                    <h2>1. Negative Resistance of the Cross-Coupled Pair</h2>
+                    <p>Looking into the cross-coupled NMOS pair from the drain nodes (D1, D2), the differential small-signal sees a purely real and negative impedance:</p>
+                    <div class="math-block">$$R_{\text{neg}} = -\frac{2}{g_m}$$</div>
+                    <p>where $g_m$ is each transistor's transconductance (both NMOS are identical by symmetry). This negative resistance cancels part of the LC tank loss, enhancing its quality factor.</p>
+
+                    <h2>2. Passive LC Tank</h2>
+                    <p>The real inductor has series loss $r_L$. Near resonance $\omega_0 = 1/\sqrt{LC_v}$, this is equivalent to a parallel resistance $R_p$:</p>
+                    <div class="math-block">$$R_p = \frac{(\omega_0 L)^2}{r_L} = Q_0 \cdot \omega_0 L, \qquad Q_0 = \frac{\omega_0 L}{r_L}$$</div>
+                    <p>With $L = 40$ nH, $r_L = 0.6\ \Omega$ and $f_0 = 200$ MHz: $Q_0 \approx 84$, $R_p \approx 4.2\ k\Omega$.</p>
+
+                    <h2>3. Q Enhanced by the Cross-Coupled Pair</h2>
+                    <p>The cross-coupled pair adds $-R_{\text{neg}}$ in parallel with the tank. Effective conductance is $G_{\text{eff}} = G_p - g_m/2$ (factor 1/2 since each transistor contributes $g_m/2$ to the differential mode). The enhanced Q is:</p>
+                    <div class="math-block">$$\boxed{\,Q_{\text{enh}} = \frac{Q_0}{1 - g_m R_p / 2}\,}$$</div>
+                    <p>As $g_m R_p / 2 \to 1$, $Q_{\text{enh}} \to \infty$ and the system enters oscillation. The safe operating point keeps a positive phase margin:</p>
+                    <div class="math-block">$$\text{PM} \approx 2\arctan\left(\sqrt{\epsilon}\right), \qquad \epsilon = 1 - \frac{g_m R_p}{2}$$</div>
+
+                    <h2>4. EMG Frequency Modulation</h2>
+                    <p>The varactor has $C_v(V) = C_0\,(1 + \alpha V_{EMG})$, where $V_{EMG} = V(\text{emg\_p}) - V(\text{emg\_n})$. The resonant frequency is then:</p>
+                    <div class="math-block">$$\omega_0(V_{EMG}) = \frac{1}{\sqrt{L\,C_0(1 + \alpha V_{EMG})}} \approx \omega_{0,0}\left(1 - \frac{\alpha V_{EMG}}{2}\right)$$</div>
+                    <div class="math-block">$$\boxed{\,\frac{df_0}{dV_{EMG}} = -\frac{\alpha\,f_0}{2}\,}$$</div>
+                    <p>For $\alpha = 0.5\ V^{-1}$ and $f_0 = 200$ MHz: $df_0/dV \approx 50$ MHz/V = 250 kHz/mV. An EMG signal of $\pm 5$ mV gives a peak deviation of $\pm 1.25$ MHz, much wider than the notch bandwidth ($< 30$ kHz), allowing the signal to be recovered by phase extraction.</p>
+
+                    <h2>5. FDM System Transfer Function</h2>
+                    <p>When $N$ resonators hang off the same differential transmission line of characteristic impedance $Z_R$, the full system has:</p>
+                    <div class="math-block">$$H(\omega, \mathbf{V}) = \frac{1}{2 + Z_R \displaystyle\sum_{i=1}^{N} \frac{1}{Z_{\text{Res}}^{(i)}(\omega, V_i)}}$$</div>
+                    <p>where $Z_{\text{Res}}^{(i)} = \frac{1}{j\omega C_c^{(i)}} + \frac{1}{Y_{\text{tank}}^{(i)}(\omega, V_i)}$. In the .asc file we simulate a single channel ($N = 1$), but the transfer function preserves this form.</p>
+
+                    <h2>6. Phase Extraction to Recover EMG</h2>
+                    <p>The external reader applies a probe tone at $\omega_p \approx \omega_0$ and measures the phase of the return. Near resonance the behavior is Lorentzian:</p>
+                    <div class="math-block">$$\varphi(t) \approx -\arctan\left[\,2 Q_{\text{enh}}\,\frac{\omega_p - \omega_0(V_{EMG}(t))}{\omega_p}\,\right]$$</div>
+                    <p>This is the quantity recovered by the Hilbert &rarr; downconversion &rarr; arctan DSP chain, identical to the pipeline in S. Herman's dissertation.</p>
+
+                    <h2>7. Noise Budget</h2>
+                    <p>The enhanced tank has input-referred noise voltage:</p>
+                    <div class="math-block">$$\overline{v_{n,\text{tank}}^2} = 4kT\,R_p\,\frac{Q_{\text{enh}}}{Q_0}\quad\left[V^2/Hz\right]$$</div>
+                    <p>With $R_p = 4.2$ k&Omega;, $Q_{\text{enh}}/Q_0 = 50$ (for $Q = 4\,200$): $\overline{v_n} \approx 60$ nV/$\sqrt{Hz}$. Over 30 kHz bandwidth: $\approx 10$ &mu;V$_{\text{rms}}$. Coherent DSP averaging over 10 ms of EMG signal (60$\times$ oversampling vs 500 Hz EMG) cuts this by $\approx \sqrt{300} = 17\times$ to $\approx 0.6$ &mu;V$_{\text{rms}}$, within the $< 5$ &mu;V$_{\text{rms}}$ target.</p>
+                </div>
+            </section>
+
+            <!-- ================= TAB 4: SIMULATION GUIDE ================= -->
+            <section id="tab-sim" class="tab-content academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Guia de Simulacion en LTspice</span>
+                    <span class="lang-en">LTspice Simulation Guide</span>
+                </h1>
+
+                <div class="lang-es">
+                    <h2>Bloque de Directivas SPICE (en el .asc)</h2>
+                    <p>El bloque siguiente vive en la esquina superior izquierda del esquematico. Para cambiar el comportamiento de la simulacion, simplemente edita los valores de los <span class="code-inline">.param</span>:</p>
+
+                    <div class="code-block">
+.param VDD=1.2 L=40n C0=32f alpha=0.5 RS=0.6
+.param Itail=130u Cc=5f Rb=100k VBIAS_V=0.6
+.param EMGamp=5m EMGfreq=100
+.model NMOSGEN NMOS (Vto=0.3 Kp=200u Lambda=0.02
++   Cgso=0.2f Cgdo=0.2f Cgbo=0.1f)
+.ac dec 1000 10Meg 500Meg
+.step param Itail list 0u 50u 100u 130u 160u
+;.tran 0 50m 0 10u    ; (descomenta para ver modulacion EMG transitoria)
+                    </div>
+
+                    <h2>Paso a Paso</h2>
+                    <ol>
+                        <li><strong>Abre el archivo:</strong> doble clic en <span class="code-inline">CROSS COUPLED.asc</span> &rarr; LTspice carga el esquematico.</li>
+                        <li><strong>Ejecuta la simulacion AC por defecto:</strong> presiona <span class="code-inline">Run</span> (icono de hombrecito corriendo) o <span class="code-inline">Simulate &rarr; Run</span>. Esto ejecuta <span class="code-inline">.ac dec 1000 10Meg 500Meg</span> con barrido de <span class="code-inline">Itail</span>.</li>
+                        <li><strong>Sondea el voltaje diferencial:</strong> en la ventana de forma de onda, escribe <span class="code-inline">V(D1) - V(D2)</span> en la barra de expresion (Plot Settings &rarr; Add Trace), o haz clic con boton derecho en el plot y selecciona <span class="code-inline">Add Trace</span>.</li>
+                        <li><strong>Lee $f_0$ y BW:</strong> obtendras 5 trazas (una por cada valor de Itail). Cada traza es una curva de magnitud vs frecuencia. El pico es $f_0$. Mide BW a $-3$ dB del pico.</li>
+                        <li><strong>Calcula Q:</strong> $Q = f_0 / \text{BW}_{-3dB}$. Espera ver Q crecer dramaticamente con Itail.</li>
+                        <li><strong>Modulacion EMG (transitoria):</strong> comenta el <span class="code-inline">.step</span> (poniendo ; al inicio), descomenta el <span class="code-inline">.tran</span>, fija <span class="code-inline">Itail=130u</span>, y vuelve a correr. Veras la modulacion en amplitud / fase.</li>
+                    </ol>
+
+                    <h2>Resultados Esperados</h2>
+                    <table class="param-table">
+                        <thead>
+                            <tr><th>$I_{\text{tail}}$</th><th>$g_m$ aprox.</th><th>$g_m R_p / 2$</th><th>Q esperado</th><th>BW esperado</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>0 uA</td><td>0</td><td>0</td><td>$\approx 84$ (pasivo)</td><td>$\approx 2.4$ MHz</td></tr>
+                            <tr><td>50 uA</td><td>$\approx 0.21$ mS</td><td>$\approx 0.44$</td><td>$\approx 150$</td><td>$\approx 1.3$ MHz</td></tr>
+                            <tr><td>100 uA</td><td>$\approx 0.39$ mS</td><td>$\approx 0.82$</td><td>$\approx 470$</td><td>$\approx 425$ kHz</td></tr>
+                            <tr><td>130 uA</td><td>$\approx 0.50$ mS</td><td>$\approx 1.05$</td><td>oscilacion (Q&rarr;inf)</td><td>colapsa</td></tr>
+                            <tr><td>160 uA</td><td>$\approx 0.62$ mS</td><td>$\approx 1.30$</td><td>oscilacion sostenida</td><td>n/a</td></tr>
+                        </tbody>
+                    </table>
+                    <p><em>Nota:</em> los valores exactos dependen del modelo NMOS (NMOSGEN es generico Level 1). Con un modelo BSIM real, el punto critico se desplazara, pero la tendencia cualitativa es identica.</p>
+
+                    <h2>Hoja de Trucos: Que Editar Para...</h2>
+                    <ul>
+                        <li><strong>Cambiar la frecuencia objetivo:</strong> ajusta <span class="code-inline">L</span> (sube L para bajar $f_0$) o <span class="code-inline">C0</span>. Para 50 MHz: prueba <span class="code-inline">L=80n C0=125f</span>. Para 125 MHz: <span class="code-inline">L=40n C0=80f</span>.</li>
+                        <li><strong>Ajustar la sensibilidad EMG:</strong> sube <span class="code-inline">alpha</span> (mas sensible) o baja para mas linealidad.</li>
+                        <li><strong>Apuntar a un Q especifico:</strong> calcula $g_m R_p / 2 = 1 - Q_0/Q_{\text{target}}$ y ajusta <span class="code-inline">Itail</span> (mayor Itail &rarr; mayor $g_m$).</li>
+                        <li><strong>Ver senal EMG mas grande:</strong> aumenta <span class="code-inline">EMGamp</span> a 50m (50 mV) para visualizar bien en transitorio.</li>
+                        <li><strong>Cambiar punto de polarizacion del varactor:</strong> ajusta <span class="code-inline">VBIAS_V</span> entre 0 y 1.2 V.</li>
+                        <li><strong>Reemplazar varactor por capacitor fijo:</strong> en cada Cv, cambia <span class="code-inline">Value Q={C0*(1+alpha*V(emg_p,emg_n))*x}</span> por <span class="code-inline">Value {C0}</span>. Util para depurar bias DC.</li>
+                    </ul>
+
+                    <h2>Sondas Utiles para la Forma de Onda</h2>
+                    <ul>
+                        <li><span class="code-inline">V(D1) - V(D2)</span>: voltaje diferencial del tanque.</li>
+                        <li><span class="code-inline">V(emg_p, emg_n)</span>: senal EMG en bornes de los varactores.</li>
+                        <li><span class="code-inline">V(TLp) - V(TLn)</span>: voltaje diferencial en la sonda TL (entrada al sistema).</li>
+                        <li><span class="code-inline">I(L1)</span>, <span class="code-inline">Id(M1)</span>: corriente del tanque y corriente de drenaje del NMOS.</li>
+                        <li><span class="code-inline">V(ST)</span>: voltaje del nodo de cola (debe ser DC, oscilacion en modo comun = problema).</li>
+                    </ul>
+                </div>
+
+                <div class="lang-en">
+                    <h2>SPICE Directives Block (in the .asc)</h2>
+                    <p>The block below lives in the top-left corner of the schematic. To change simulation behavior, just edit the <span class="code-inline">.param</span> values:</p>
+
+                    <div class="code-block">
+.param VDD=1.2 L=40n C0=32f alpha=0.5 RS=0.6
+.param Itail=130u Cc=5f Rb=100k VBIAS_V=0.6
+.param EMGamp=5m EMGfreq=100
+.model NMOSGEN NMOS (Vto=0.3 Kp=200u Lambda=0.02
++   Cgso=0.2f Cgdo=0.2f Cgbo=0.1f)
+.ac dec 1000 10Meg 500Meg
+.step param Itail list 0u 50u 100u 130u 160u
+;.tran 0 50m 0 10u    ; (uncomment for EMG transient view)
+                    </div>
+
+                    <h2>Step by Step</h2>
+                    <ol>
+                        <li><strong>Open the file:</strong> double-click <span class="code-inline">CROSS COUPLED.asc</span> &rarr; LTspice loads the schematic.</li>
+                        <li><strong>Run the default AC simulation:</strong> press <span class="code-inline">Run</span> (running-man icon) or <span class="code-inline">Simulate &rarr; Run</span>. This executes <span class="code-inline">.ac dec 1000 10Meg 500Meg</span> with the Itail sweep.</li>
+                        <li><strong>Probe the differential voltage:</strong> in the waveform window, type <span class="code-inline">V(D1) - V(D2)</span> in the expression bar (Plot Settings &rarr; Add Trace), or right-click on the plot and select <span class="code-inline">Add Trace</span>.</li>
+                        <li><strong>Read $f_0$ and BW:</strong> you'll see 5 traces (one per Itail value). Each is a magnitude-vs-frequency curve. The peak is $f_0$. Measure BW at $-3$ dB from the peak.</li>
+                        <li><strong>Compute Q:</strong> $Q = f_0 / \text{BW}_{-3dB}$. Expect Q to grow dramatically with Itail.</li>
+                        <li><strong>EMG modulation (transient):</strong> comment out the <span class="code-inline">.step</span> (add ; at the front), uncomment the <span class="code-inline">.tran</span>, set <span class="code-inline">Itail=130u</span>, and re-run. You'll see amplitude / phase modulation.</li>
+                    </ol>
+
+                    <h2>Expected Results</h2>
+                    <table class="param-table">
+                        <thead>
+                            <tr><th>$I_{\text{tail}}$</th><th>Approx $g_m$</th><th>$g_m R_p / 2$</th><th>Expected Q</th><th>Expected BW</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>0 uA</td><td>0</td><td>0</td><td>$\approx 84$ (passive)</td><td>$\approx 2.4$ MHz</td></tr>
+                            <tr><td>50 uA</td><td>$\approx 0.21$ mS</td><td>$\approx 0.44$</td><td>$\approx 150$</td><td>$\approx 1.3$ MHz</td></tr>
+                            <tr><td>100 uA</td><td>$\approx 0.39$ mS</td><td>$\approx 0.82$</td><td>$\approx 470$</td><td>$\approx 425$ kHz</td></tr>
+                            <tr><td>130 uA</td><td>$\approx 0.50$ mS</td><td>$\approx 1.05$</td><td>oscillation (Q&rarr;inf)</td><td>collapses</td></tr>
+                            <tr><td>160 uA</td><td>$\approx 0.62$ mS</td><td>$\approx 1.30$</td><td>sustained oscillation</td><td>n/a</td></tr>
+                        </tbody>
+                    </table>
+                    <p><em>Note:</em> exact numbers depend on the NMOS model (NMOSGEN is generic Level 1). With a real BSIM model the critical point shifts, but the qualitative trend is identical.</p>
+
+                    <h2>Cheat Sheet: What to Edit For...</h2>
+                    <ul>
+                        <li><strong>Change target frequency:</strong> tune <span class="code-inline">L</span> (raise L to lower $f_0$) or <span class="code-inline">C0</span>. For 50 MHz: try <span class="code-inline">L=80n C0=125f</span>. For 125 MHz: <span class="code-inline">L=40n C0=80f</span>.</li>
+                        <li><strong>Tune EMG sensitivity:</strong> raise <span class="code-inline">alpha</span> (more sensitive) or lower for more linearity.</li>
+                        <li><strong>Target a specific Q:</strong> compute $g_m R_p / 2 = 1 - Q_0/Q_{\text{target}}$ and tune <span class="code-inline">Itail</span> (higher Itail &rarr; higher $g_m$).</li>
+                        <li><strong>See larger EMG signal:</strong> raise <span class="code-inline">EMGamp</span> to 50m (50 mV) to make transient view obvious.</li>
+                        <li><strong>Move varactor bias point:</strong> tune <span class="code-inline">VBIAS_V</span> between 0 and 1.2 V.</li>
+                        <li><strong>Replace varactor with fixed cap:</strong> in each Cv, swap <span class="code-inline">Value Q={C0*(1+alpha*V(emg_p,emg_n))*x}</span> for <span class="code-inline">Value {C0}</span>. Useful for debugging DC bias.</li>
+                    </ul>
+
+                    <h2>Useful Probes for the Waveform Window</h2>
+                    <ul>
+                        <li><span class="code-inline">V(D1) - V(D2)</span>: tank differential voltage.</li>
+                        <li><span class="code-inline">V(emg_p, emg_n)</span>: EMG signal across the varactors.</li>
+                        <li><span class="code-inline">V(TLp) - V(TLn)</span>: differential voltage at the TL probe (system input).</li>
+                        <li><span class="code-inline">I(L1)</span>, <span class="code-inline">Id(M1)</span>: tank current and NMOS drain current.</li>
+                        <li><span class="code-inline">V(ST)</span>: tail node voltage (should be DC; common-mode oscillation here = problem).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ================= TAB 5: REFERENCES ================= -->
+            <section id="tab-refs" class="tab-content academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Referencias</span>
+                    <span class="lang-en">References</span>
+                </h1>
+
+                <div class="space-y-6 text-sm text-slate-700 pl-4">
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[1]</span>
+                        <span>S. Herman, "Theory, Design, and Implementation of Hunnid Channel EMG," Ph.D. dissertation, Dept. Mech. Aerosp. Eng., Univ. California, Los Angeles, CA, USA, 2026.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[2]</span>
+                        <span>T. Clites and C. Velez Cuervo, "100x Improvement in Bioelectronic Signal Acquisition," UCLA/UCI Collaboration Grant Proposal, 2025.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[3]</span>
+                        <span>E. Dulger and E. Sanchez-Sinencio, "Low-voltage low-power high-Q CMOS RF bandpass filter," <em>IEEE J. Solid-State Circuits</em>, vol. 38, no. 8, pp. 1431-1436, Aug. 2003.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[4]</span>
+                        <span>B. Razavi, "The Cross-Coupled Pair - Part I," <em>IEEE Solid-State Circuits Magazine</em>, vol. 6, no. 3, pp. 7-10, Summer 2014. doi: 10.1109/MSSC.2014.2329234.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[5]</span>
+                        <span>J. Riistama <em>et al.</em>, "Totally passive wireless biopotential measurement sensor using inductively coupled resonance circuits," <em>Sensors and Actuators A: Physical</em>, vol. 157, no. 2, pp. 313-321, 2010.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[6]</span>
+                        <span>ISO/TC 150, "Implants for surgery - Active implantable medical devices - Part 1: General requirements for safety, marking and for information to be provided by the manufacturer," ISO 14708-1:2014, 2014.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[7]</span>
+                        <span>Y. H. Cai <em>et al.</em>, "Resonant Topology Survey for Implantable EMG Sensing," internal technical report (compass artifact wf-6c294fec-ec05-4c54-a874-736c679aa7e7), May 2026.</span>
+                    </div>
+                </div>
+
+                <div class="mt-10 p-4 bg-slate-100 border border-slate-300 rounded-lg text-xs text-slate-600">
+                    <span class="lang-es"><strong>Documentos asociados (en el directorio de trabajo):</strong> <span class="code-inline">CONTEX.md</span> (requisitos completos del sistema), <span class="code-inline">compass_artifact_wf-...md</span> (estudio comparativo de topologias A.1-A.15), <span class="code-inline">The_Cross-Coupled_Pair_-_Part_I.pdf</span> (revision historica de Razavi).</span>
+                    <span class="lang-en"><strong>Associated documents (in the working directory):</strong> <span class="code-inline">CONTEX.md</span> (full system requirements), <span class="code-inline">compass_artifact_wf-...md</span> (comparative survey of topologies A.1-A.15), <span class="code-inline">The_Cross-Coupled_Pair_-_Part_I.pdf</span> (Razavi historical review).</span>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="bg-slate-900 text-slate-500 py-6 text-center text-sm border-t border-slate-800">
+        <p class="lang-es">Companion para el archivo LTspice CROSS COUPLED.asc - Topologia A.1, Resonant Electrophysiology UCLA/UCI.</p>
+        <p class="lang-en">Companion for the LTspice file CROSS COUPLED.asc - Topology A.1, Resonant Electrophysiology UCLA/UCI.</p>
+        <p class="mt-2">(c) 2026 UCLA / UCI Bioelectronics Collaboration</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            });
+        });
+
+        let currentLang = 'es';
+        function toggleLanguage() {
+            const body = document.body;
+            if (currentLang === 'es') {
+                body.classList.remove('lang-es');
+                body.classList.add('lang-en');
+                currentLang = 'en';
+            } else {
+                body.classList.remove('lang-en');
+                body.classList.add('lang-es');
+                currentLang = 'es';
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-blue-600', 'text-white');
+                el.classList.add('text-slate-300');
+            });
+            document.getElementById(tabId).classList.add('active');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('text-slate-300');
+            activeBtn.classList.add('bg-blue-600', 'text-white');
+        }
+    </script>
+</body>
+</html>

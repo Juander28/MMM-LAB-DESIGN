@@ -1,0 +1,147 @@
+* ==========================================================================
+* OPAM open-loop gain testbench - final sizing
+*
+* Run it with:   ngspice -b tb_opam.spice
+* Change the corner on the .lib line below (best / tt / all).  BIAS is an
+* external pin and is trimmed per corner: 1.25 V at best, 0.90 V at tt,
+* 0.63 V at all - the trim is exactly the threshold shift.
+*
+* The gain here is flat from DC, so it does not rest on the overlap
+* capacitances, which this PDK has not validated in AC.
+* ==========================================================================
+
+.include "/foss/designs/TFT-MMM-LAB-PDK/libs.tech/ngspice/design.ngspice"
+.lib /foss/designs/TFT-MMM-LAB-PDK/libs.tech/ngspice/igzo_mmm_lab.ngspice best
+
+.include "opam_core.spice"
+
+.param vdd = 8
+.param vcm = 4
+.param vbias = 1.25
+.param c_boot  = 160.64u
+.param c_fb    = 160.64u
+.param l_bf    = 10u
+.param l_bl    = 35u
+.param l_cc    = 1505u
+.param l_dl    = 200u
+.param l_g2    = 195u
+.param l_in    = 10u
+.param l_od    = 15u
+.param l_of    = 530u
+.param l_t2    = 45u
+.param l_tail  = 200u
+.param w_bf    = 5000u
+.param w_bl    = 100u
+.param w_cc    = 400u
+.param w_dl    = 140u
+.param w_g2    = 200u
+.param w_in    = 385u
+.param w_od    = 10u
+.param w_of    = 2720u
+.param w_t2    = 2510u
+.param w_tail  = 2950u
+
+VDD VDD 0 DC 'vdd'
+VCM cm  0 DC 'vcm'
+VD  d   0 DC 0 AC 1 SIN(0 0.005 1)
+EIP INP cm d 0 0.5
+EIN INN cm d 0 -0.5
+VB BIAS 0 DC 'vbias'
+
+x1 VDD OUT INN INP BIAS 0 OPAM
+
+.control
+set filetype=ascii
+save all
+
+* --- 1. operating point ----------------------------------------------------
+op
+echo === operating point ===
+print v(OUT) v(x1.net1) v(x1.net2) v(x1.net3) v(x1.net7) v(x1.net8) v(x1.BOOT_R)
+print i(VDD)
+show m : vgs vds id gm gds
+
+* --- 2. Bode: magnitude and phase ------------------------------------------
+ac dec 20 0.1 1e6
+let mag_db = vdb(OUT)
+let phase  = 180/PI * cph(v(OUT))
+* The reference is the PEAK of the response, not the value at 0.1 Hz.  OPAM
+* rises about 2 dB from 0.1 Hz to a peak near 2 Hz, so reading the gain at the
+* bottom of the sweep understates it and puts f-3dB in the wrong place.
+meas ac av_dc  FIND vdb(OUT) AT=0.1
+meas ac av_max MAX vdb(OUT)
+meas ac f3db   WHEN vdb(OUT)='av_max-3' FALL=1
+meas ac funity WHEN vdb(OUT)=0 FALL=1
+* Phase margin against the DC phase, not against zero: an inverting amplifier
+* already sits at 180 degrees at DC, and subtracting it is what makes the
+* number mean the same thing for both circuits.
+meas ac ph_dc FIND phase AT=0.1
+meas ac ph_u  FIND phase WHEN vdb(OUT)=0 FALL=1
+let pm = 180 + (ph_u - ph_dc)
+echo === bode: gain, corner, unity gain, phase margin ===
+print av_dc av_max f3db funity ph_dc ph_u pm
+meas ac av_stage1 MAX vdb(x1.net3) from=0.1 to=1e6
+meas ac av_stage2 MAX vdb(x1.net7) from=0.1 to=1e6
+* the AC vectors die with the plot, so keep what the later runs need
+set avmaxs = $&av_max
+set f3s    = $&f3db
+
+* --- 3. input / output relation --------------------------------------------
+dc VD -2 2 0.01
+echo === transfer: output against differential input ===
+meas dc out_max MAX v(OUT)
+meas dc out_min MIN v(OUT)
+meas dc vo_0    FIND v(OUT) AT=0
+meas dc vo_p    FIND v(OUT) AT=0.01
+meas dc vo_m    FIND v(OUT) AT=-0.01
+let slope    = (vo_p - vo_m) / 0.02
+let slope_db = db(abs(slope))
+print out_max out_min vo_0 slope slope_db
+
+* --- 4. sine inside the band -----------------------------------------------
+* a decade below the corner, and small enough that the output cannot clip
+let fsig = $f3s / 10
+let amp  = 0.3 / (10^($avmaxs/20))
+set fsigs = $&fsig
+set amps  = $&amp
+echo === sine: frequency and amplitude derived from the AC run ===
+print fsig amp
+* the honest reference for the cross-check is the AC gain at THIS frequency,
+* not the flat-band figure - one extra single-point AC run buys that
+ac lin 1 $fsigs $fsigs
+let av_ref = vdb(OUT)
+set avrefs = $&av_ref
+alter VD sin = [ 0 $amps $fsigs ]
+* Settle for 200 cycles before measuring, and step at 50 points per cycle.
+* This is not caution for its own sake: OPAM's bootstrap gate node is held
+* only by the off-device leakage (r_off in opam_core.spice), so the signal
+* pumps charge into it through C2 and the node drifts for tens of seconds
+* before it finds equilibrium.  Measured over 12 cycles the gain reads several
+* dB high and is still moving; by 150 cycles it has converged and stays put
+* through 1000.  OPAM2 has no such node and settles at once, so the same
+* window costs it only simulation time.
+let tskip = 200 / $fsigs
+let tstop = tskip + 6 / $fsigs
+set ts = $&tstop
+set tk = $&tskip
+let tstep = 1 / (50 * $fsigs)
+set tstp = $&tstep
+tran $tstp $ts $tk
+echo === sine: measured input and output ===
+meas tran vi_pp PP v(d)   FROM=$tk TO=$ts
+meas tran vo_pp PP v(OUT) FROM=$tk TO=$ts
+let av_tran = db(vo_pp / vi_pp)
+print vi_pp vo_pp av_tran
+
+* --- 5. the two gains have to agree ----------------------------------------
+* A gap here is a result, not a glitch.  The AC run linearises about the DC
+* operating point; the transient is the circuit actually running.  If they
+* disagree by more than about 1 dB, either the sine is clipping or the
+* operating point moves once the signal is applied - and for a floating
+* bootstrap node, it does.
+let gain_err = av_tran - $avrefs
+print gain_err
+echo === done ===
+.endc
+
+.end

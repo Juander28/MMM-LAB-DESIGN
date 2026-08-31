@@ -1,0 +1,14 @@
+* ============================================================
+* PLANTILLA para el modelo de TUS TFT IGZO (aun no disponible)
+* Rellena los parametros cuando midas/extraigas tus dispositivos
+* ============================================================
+* Opcion 1 - nivel 1 rapido (primer ajuste):
+* .model TFT_IGZO NMOS (Level=1
+* +  Vto=1.0        ; TODO: tension umbral medida (V) - IGZO tipico 0..2 V
+* +  Kp=?           ; TODO: u0*Cox*(W/L) efectivo [A/V^2]; IGZO u0 ~ 5-15 cm2/Vs
+* +  Lambda=?       ; TODO: modulacion de canal (1/V)
+* +  Cgso=? Cgdo=?  ; TODO: capacidades de traslape por ancho (F/m)
+* + )
+* Opcion 2 - cuando haya extraccion completa: usar el modelo que entregue
+* el fitting (p.ej. nivel 61 a-Si TFT o RPI a-TFT) con .include del archivo
+* generado por el extractor.

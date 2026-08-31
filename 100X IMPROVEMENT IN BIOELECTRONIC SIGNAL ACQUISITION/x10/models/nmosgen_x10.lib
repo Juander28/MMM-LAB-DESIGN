@@ -1,0 +1,2 @@
+* Generic level-1 NMOS del esquematico X10 original (Kp=200u - mas debil que TEST1)
+.model NMOSGEN NMOS (Level=1 Vto=0.3 Kp=200u Lambda=0.02 Cgso=0.2f Cgdo=0.2f Cgbo=0.1f)

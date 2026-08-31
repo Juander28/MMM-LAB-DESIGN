@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\juand\\\\Desktop\\\\DARPA\\\\\" -Directory | Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\juand\\\\Desktop\\\\FINAL_ADC\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(python -c ' *)",
+      "Bash(pip --version)",
+      "Bash(python -m venv .venv)",
+      "Bash(.venv/Scripts/python.exe -m pip install --upgrade pip)",
+      "Bash(.venv/Scripts/python.exe -m pip install gdsfactory)",
+      "Bash(.venv/Scripts/python.exe -m pip install sky130 gf180)",
+      "Bash(.venv/Scripts/python.exe -m pip install \"pydantic<2.10\")",
+      "Bash(.venv/Scripts/python.exe test_sky130_gf180.py)",
+      "Bash(.venv/Scripts/python.exe -m coil_layout.spice_parser examples/bias.spice)",
+      "Bash(.venv/Scripts/python.exe test_flow.py examples/bias.spice gf180 ./out)",
+      "Bash(.venv/Scripts/python.exe -m pip freeze)",
+      "Bash(.venv/Scripts/python.exe test_flow.py examples/inverter_sky130.spice sky130 ./out)",
+      "Bash(python \"C:\\\\Users\\\\juand\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\h--My-Drive-UCI-PHD-RESEARCH-BASIC-ELEM-COIL-COIL-CALCULATOR\\\\62820632-d252-42f3-a104-44310bf58279\\\\scratchpad\\\\test_full_run.py\")"
+    ]
+  }
+}

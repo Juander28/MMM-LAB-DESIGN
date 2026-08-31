@@ -1,0 +1,752 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;klayout-macro&gt;
+ &lt;description&gt;AI_Parts with original capacitor, MOSFET, and Au capacitor&lt;/description&gt;
+ &lt;version /&gt;
+ &lt;category&gt;pymacros&lt;/category&gt;
+ &lt;prolog /&gt;
+ &lt;epilog /&gt;
+ &lt;doc /&gt;
+ &lt;autorun&gt;false&lt;/autorun&gt;
+ &lt;autorun-early&gt;false&lt;/autorun-early&gt;
+ &lt;priority&gt;0&lt;/priority&gt;
+ &lt;shortcut /&gt;
+ &lt;show-in-menu&gt;false&lt;/show-in-menu&gt;
+ &lt;group-name /&gt;
+ &lt;menu-path /&gt;
+ &lt;interpreter&gt;python&lt;/interpreter&gt;
+ &lt;dsl-interpreter-name /&gt;
+ &lt;text&gt;"""
+KLayout Python generator for a rectangular MIM capacitor.
+
+Install/use:
+  1. In KLayout, run this file as a Python macro, or place it in the Python
+     macros folder so it is loaded on startup.
+  2. The PCell is registered under library "AI_Parts" as "MIMCapacitor".
+  3. You can also call create_mim_capacitor(...) directly from another script.
+
+Units:
+  width and length are in micrometers.
+  layer parameters are pya.LayerInfo objects, such as pya.LayerInfo(10, 0).
+"""
+
+import pya
+
+
+DEFAULT_TOP_LAYER = pya.LayerInfo(30, 0, "MIM_TOP")
+DEFAULT_BOTTOM_LAYER = pya.LayerInfo(20, 0, "MIM_BOTTOM")
+DEFAULT_VIA_LAYER = pya.LayerInfo(40, 0, "MIM_VIA")
+DEFAULT_MOS_ACTIVE_LAYER = pya.LayerInfo(1, 0, "MOS_ACTIVE")
+DEFAULT_MOS_POLY_LAYER = pya.LayerInfo(2, 0, "MOS_POLY")
+DEFAULT_MOS_SD_LAYER = pya.LayerInfo(3, 0, "MOS_SD")
+DEFAULT_MOS_CONTACT_LAYER = pya.LayerInfo(4, 0, "MOS_CONTACT")
+DEFAULT_MOS_METAL_LAYER = pya.LayerInfo(5, 0, "MOS_METAL")
+LIBRARY_NAME = "AI_Parts"
+PCELL_NAME = "MIMCapacitor"
+MOSFET_PCELL_NAME = "MOSFET"
+GENERATOR_VERSION = "visible_geometry_v3_plus_au"
+AU_CAPACITOR_PCELL_NAME = "MIMCapacitor_Au"
+DEFAULT_AU_SD_CONTACT_LAYER = pya.LayerInfo(1, 0, "SD contact - Au")
+DEFAULT_AU_GATE_LAYER = pya.LayerInfo(2, 0, "Gate - Au")
+
+
+def _to_dbu(value_um, dbu):
+    """Convert micrometers to integer database units."""
+    return int(round(float(value_um) / dbu))
+
+
+def _as_layer_info(layer):
+    if isinstance(layer, pya.LayerInfo):
+        return layer
+
+    if isinstance(layer, int):
+        return pya.LayerInfo(layer, 0)
+
+    if isinstance(layer, (tuple, list)) and len(layer) in (2, 3):
+        if len(layer) == 2:
+            return pya.LayerInfo(int(layer[0]), int(layer[1]))
+        return pya.LayerInfo(int(layer[0]), int(layer[1]), str(layer[2]))
+
+    raise TypeError(
+        "Layer must be pya.LayerInfo, an integer layer number, "
+        "or a (layer, datatype[, name]) tuple."
+    )
+
+
+def _capacitor_geometry(layout, width, length, origin=(0, 0)):
+    width = float(width)
+    length = float(length)
+    if width &amp;lt;= 0 or length &amp;lt;= 0:
+        raise ValueError("width and length must be positive.")
+
+    x0 = _to_dbu(origin[0], layout.dbu)
+    y0 = _to_dbu(origin[1], layout.dbu)
+    width_dbu = _to_dbu(width, layout.dbu)
+    length_dbu = _to_dbu(length, layout.dbu)
+    x1 = x0 + width_dbu
+    y1 = y0 + length_dbu
+
+    full_box = pya.Box(x0, y0, x1, y1)
+
+    min_side = min(width_dbu, length_dbu)
+    if min_side &amp;lt;= 4:
+        inset = 0
+    else:
+        inset = max(1, min_side // 10)
+        inset = min(inset, max(0, (min_side - 2) // 2))
+
+    top_x0 = x0 + inset
+    top_y0 = y0 + inset
+    top_x1 = x1 - inset
+    top_y1 = y1 - inset
+    top_box = pya.Box(top_x0, top_y0, top_x1, top_y1)
+
+    top_width = top_x1 - top_x0
+    top_length = top_y1 - top_y0
+    via_size = max(1, min(_to_dbu(0.5, layout.dbu), min(top_width, top_length) // 5))
+    via_pitch = max(via_size * 3, _to_dbu(1.5, layout.dbu), 1)
+    via_margin = max(via_size, inset)
+
+    via_boxes = []
+    start_x = top_x0 + via_margin
+    stop_x = top_x1 - via_margin
+    start_y = top_y0 + via_margin
+    stop_y = top_y1 - via_margin
+
+    if stop_x - start_x &amp;gt;= via_size and stop_y - start_y &amp;gt;= via_size:
+        y = start_y
+        while y + via_size &amp;lt;= stop_y:
+            x = start_x
+            while x + via_size &amp;lt;= stop_x:
+                via_boxes.append(pya.Box(x, y, x + via_size, y + via_size))
+                x += via_pitch
+            y += via_pitch
+
+    if not via_boxes and top_width &amp;gt;= via_size and top_length &amp;gt;= via_size:
+        cx = (top_x0 + top_x1) // 2
+        cy = (top_y0 + top_y1) // 2
+        half = via_size // 2
+        via_boxes.append(pya.Box(cx - half, cy - half, cx - half + via_size, cy - half + via_size))
+
+    return full_box, top_box, via_boxes
+
+
+def _insert_capacitor_shapes(cell, bottom_layer_index, top_layer_index, via_layer_index, geometry):
+    bottom_box, top_box, via_boxes = geometry
+
+    cell.shapes(bottom_layer_index).insert(bottom_box)
+    cell.shapes(top_layer_index).insert(top_box)
+    for via_box in via_boxes:
+        cell.shapes(via_layer_index).insert(via_box)
+
+
+def _pcell_layer_index(pcell, param_name):
+    helper_attr = "{}_layer".format(param_name)
+    if hasattr(pcell, helper_attr):
+        layer_index = getattr(pcell, helper_attr)
+        if isinstance(layer_index, int) and layer_index &amp;gt;= 0:
+            return layer_index
+
+    layer_info = getattr(pcell, param_name)
+    return pcell.layout.layer(_as_layer_info(layer_info))
+
+
+def apply_mim_layer_styles():
+    """
+    Make the default MIM layers visibly filled in the active KLayout view.
+
+    This affects display only; it does not change the layout database.
+    """
+    app = pya.Application.instance()
+    if app is None or app.main_window() is None:
+        return
+
+    view = app.main_window().current_view()
+    if view is None:
+        return
+
+    view.add_missing_layers()
+    colors = {
+        (DEFAULT_BOTTOM_LAYER.layer, DEFAULT_BOTTOM_LAYER.datatype): 0x3366CC,
+        (DEFAULT_TOP_LAYER.layer, DEFAULT_TOP_LAYER.datatype): 0xCC3333,
+        (DEFAULT_VIA_LAYER.layer, DEFAULT_VIA_LAYER.datatype): 0x33AA55,
+    }
+
+    iter_layer = view.begin_layers()
+    while not iter_layer.at_end():
+        props = iter_layer.current().dup()
+        key = (props.source_layer, props.source_datatype)
+        if key in colors:
+            props.visible = True
+            props.dither_pattern = 0
+            props.fill_color = colors[key]
+            props.frame_color = colors[key]
+            props.transparent = False
+            props.width = 1
+            view.set_layer_properties(iter_layer, props)
+        iter_layer.next()
+
+    view.update_content()
+
+
+def make_mim_capacitor_demo(width=20.0, length=12.0):
+    """
+    Create a new top cell in the active layout and draw real capacitor geometry.
+
+    This is useful for debugging display/style issues because it bypasses PCell
+    instantiation and writes the boxes directly into the current layout.
+    """
+    app = pya.Application.instance()
+    main_window = app.main_window() if app is not None else None
+    view = main_window.current_view() if main_window is not None else None
+
+    if view is None:
+        layout = pya.Layout()
+        layout.dbu = 0.001
+        top_cell = layout.create_cell("MIMCapacitor_Demo")
+    else:
+        cellview = view.active_cellview()
+        if not cellview.is_valid():
+            view.create_layout(True)
+            cellview = view.active_cellview()
+        layout = cellview.layout()
+        top_cell = layout.create_cell("MIMCapacitor_Demo")
+        cellview.cell = top_cell
+
+    create_mim_capacitor(
+        layout,
+        top_cell,
+        width,
+        length,
+        DEFAULT_TOP_LAYER,
+        DEFAULT_BOTTOM_LAYER,
+        DEFAULT_VIA_LAYER,
+    )
+
+    apply_mim_layer_styles()
+    return top_cell
+
+
+def create_mim_capacitor(
+    layout,
+    cell,
+    width,
+    length,
+    top_layer,
+    bottom_layer,
+    via_layer,
+    origin=(0, 0),
+):
+    """
+    Draw a rectangular MIM capacitor into an existing KLayout cell.
+
+    Args:
+        layout: pya.Layout.
+        cell: pya.Cell receiving geometry.
+        width: capacitor width in micrometers.
+        length: capacitor length in micrometers.
+        top_layer: top electrode layer, as pya.LayerInfo/int/tuple.
+        bottom_layer: bottom electrode layer, as pya.LayerInfo/int/tuple.
+        via_layer: via/marker layer, as pya.LayerInfo/int/tuple.
+        origin: lower-left corner in micrometers, default (0, 0).
+
+    Returns:
+        pya.Box bounding box of the generated capacitor.
+    """
+    geometry = _capacitor_geometry(layout, width, length, origin)
+
+    top_index = layout.layer(_as_layer_info(top_layer))
+    bottom_index = layout.layer(_as_layer_info(bottom_layer))
+    via_index = layout.layer(_as_layer_info(via_layer))
+
+    _insert_capacitor_shapes(cell, bottom_index, top_index, via_index, geometry)
+
+    return geometry[0]
+
+
+def _positive_um(value, name):
+    value = float(value)
+    if value &amp;lt;= 0:
+        raise ValueError("{} must be positive.".format(name))
+    return value
+
+
+def _mosfet_geometry(
+    layout,
+    L,
+    W,
+    sd_overlap,
+    gate_overlap,
+    contact_size,
+    contact_pitch,
+    origin=(0, 0),
+):
+    L = _positive_um(L, "gate length L")
+    W = _positive_um(W, "gate width W")
+    sd_overlap = _positive_um(sd_overlap, "source/drain overlap")
+    gate_overlap = _positive_um(gate_overlap, "gate overlap")
+    contact_size = _positive_um(contact_size, "contact size")
+    contact_pitch = _positive_um(contact_pitch, "contact pitch")
+
+    if contact_pitch &amp;lt; contact_size:
+        raise ValueError("contact pitch must be greater than or equal to contact size.")
+    if contact_size &amp;gt; sd_overlap or contact_size &amp;gt; W:
+        raise ValueError(
+            "contact size must fit inside the source/drain regions: "
+            "contact_size &amp;lt;= min(source/drain overlap, W)."
+        )
+
+    x0 = _to_dbu(origin[0], layout.dbu)
+    y0 = _to_dbu(origin[1], layout.dbu)
+    l_dbu = max(1, _to_dbu(L, layout.dbu))
+    w_dbu = max(1, _to_dbu(W, layout.dbu))
+    sd_dbu = max(1, _to_dbu(sd_overlap, layout.dbu))
+    gate_ov_dbu = max(1, _to_dbu(gate_overlap, layout.dbu))
+    contact_dbu = max(1, _to_dbu(contact_size, layout.dbu))
+    pitch_dbu = max(contact_dbu, _to_dbu(contact_pitch, layout.dbu))
+
+    active_box = pya.Box(x0, y0, x0 + 2 * sd_dbu + l_dbu, y0 + w_dbu)
+    gate_box = pya.Box(
+        x0 + sd_dbu,
+        y0 - gate_ov_dbu,
+        x0 + sd_dbu + l_dbu,
+        y0 + w_dbu + gate_ov_dbu,
+    )
+    source_box = pya.Box(x0, y0, x0 + sd_dbu, y0 + w_dbu)
+    drain_box = pya.Box(x0 + sd_dbu + l_dbu, y0, x0 + 2 * sd_dbu + l_dbu, y0 + w_dbu)
+
+    def contacts_for(region_x0, region_y0, region_w, region_h):
+        if region_w &amp;lt; contact_dbu or region_h &amp;lt; contact_dbu:
+            raise ValueError("contacts do not fit inside the source/drain regions.")
+
+        nx = 1 + int((region_w - contact_dbu) // pitch_dbu)
+        ny = 1 + int((region_h - contact_dbu) // pitch_dbu)
+        array_w = (nx - 1) * pitch_dbu + contact_dbu
+        array_h = (ny - 1) * pitch_dbu + contact_dbu
+        start_x = region_x0 + (region_w - array_w) // 2
+        start_y = region_y0 + (region_h - array_h) // 2
+
+        boxes = []
+        for ix in range(nx):
+            for iy in range(ny):
+                cx = start_x + ix * pitch_dbu
+                cy = start_y + iy * pitch_dbu
+                boxes.append(pya.Box(cx, cy, cx + contact_dbu, cy + contact_dbu))
+        return boxes
+
+    source_contacts = contacts_for(x0, y0, sd_dbu, w_dbu)
+    drain_contacts = contacts_for(x0 + sd_dbu + l_dbu, y0, sd_dbu, w_dbu)
+
+    return {
+        "active": active_box,
+        "gate": gate_box,
+        "source": source_box,
+        "drain": drain_box,
+        "source_contacts": source_contacts,
+        "drain_contacts": drain_contacts,
+    }
+
+
+def _insert_mosfet_shapes(
+    cell,
+    active_layer_index,
+    poly_layer_index,
+    sd_layer_index,
+    contact_layer_index,
+    metal_layer_index,
+    geometry,
+    draw_metal=True,
+):
+    cell.shapes(active_layer_index).insert(geometry["active"])
+    cell.shapes(poly_layer_index).insert(geometry["gate"])
+    cell.shapes(sd_layer_index).insert(geometry["source"])
+    cell.shapes(sd_layer_index).insert(geometry["drain"])
+
+    for contact_box in geometry["source_contacts"]:
+        cell.shapes(contact_layer_index).insert(contact_box)
+    for contact_box in geometry["drain_contacts"]:
+        cell.shapes(contact_layer_index).insert(contact_box)
+
+    if draw_metal:
+        cell.shapes(metal_layer_index).insert(geometry["source"])
+        cell.shapes(metal_layer_index).insert(geometry["drain"])
+
+
+def create_mosfet(
+    layout,
+    cell,
+    L,
+    W,
+    sd_overlap,
+    gate_overlap,
+    contact_size,
+    contact_pitch,
+    active_layer,
+    poly_layer,
+    sd_layer,
+    contact_layer,
+    metal_layer,
+    draw_metal=True,
+    origin=(0, 0),
+):
+    """
+    Draw a simplified MOS transistor into an existing KLayout cell.
+
+    Args:
+        layout: pya.Layout.
+        cell: pya.Cell receiving geometry.
+        L: gate length in micrometers.
+        W: gate/active width in micrometers.
+        sd_overlap: source/drain length on each side of the gate in micrometers.
+        gate_overlap: poly extension past active above and below in micrometers.
+        contact_size: square contact size in micrometers.
+        contact_pitch: contact array pitch in micrometers.
+        active_layer: active/diffusion layer, as pya.LayerInfo/int/tuple.
+        poly_layer: poly gate layer, as pya.LayerInfo/int/tuple.
+        sd_layer: source/drain marker layer, as pya.LayerInfo/int/tuple.
+        contact_layer: contact layer, as pya.LayerInfo/int/tuple.
+        metal_layer: metal layer, as pya.LayerInfo/int/tuple.
+        draw_metal: when true, draw metal rectangles over source/drain.
+        origin: lower-left corner of active in micrometers, default (0, 0).
+
+    Returns:
+        pya.Box bounding box of the generated active region.
+    """
+    geometry = _mosfet_geometry(
+        layout,
+        L,
+        W,
+        sd_overlap,
+        gate_overlap,
+        contact_size,
+        contact_pitch,
+        origin,
+    )
+
+    _insert_mosfet_shapes(
+        cell,
+        layout.layer(_as_layer_info(active_layer)),
+        layout.layer(_as_layer_info(poly_layer)),
+        layout.layer(_as_layer_info(sd_layer)),
+        layout.layer(_as_layer_info(contact_layer)),
+        layout.layer(_as_layer_info(metal_layer)),
+        geometry,
+        draw_metal,
+    )
+
+    return geometry["active"]
+
+
+class MIMCapacitorPCell(pya.PCellDeclarationHelper):
+    """Parameterized rectangular MIM capacitor."""
+
+    def __init__(self):
+        super(MIMCapacitorPCell, self).__init__()
+
+        self.param(
+            "width",
+            self.TypeDouble,
+            "Width",
+            default=10.0,
+            unit="um",
+            min_value=0.001,
+        )
+        self.param(
+            "length",
+            self.TypeDouble,
+            "Length",
+            default=10.0,
+            unit="um",
+            min_value=0.001,
+        )
+        self.param(
+            "top_layer",
+            self.TypeLayer,
+            "Top electrode layer",
+            default=DEFAULT_TOP_LAYER,
+        )
+        self.param(
+            "bottom_layer",
+            self.TypeLayer,
+            "Bottom electrode layer",
+            default=DEFAULT_BOTTOM_LAYER,
+        )
+        self.param(
+            "via_layer",
+            self.TypeLayer,
+            "Via/marker layer",
+            default=DEFAULT_VIA_LAYER,
+        )
+
+    def display_text_impl(self):
+        return "MIMCapacitor_{}(W={:.3f}um,L={:.3f}um)".format(
+            GENERATOR_VERSION,
+            self.width,
+            self.length,
+        )
+
+    def coerce_parameters_impl(self):
+        if self.width &amp;lt;= 0:
+            self.set_width(0.001)
+        if self.length &amp;lt;= 0:
+            self.set_length(0.001)
+
+    def produce_impl(self):
+        geometry = _capacitor_geometry(
+            self.layout,
+            self.width,
+            self.length,
+        )
+
+        _insert_capacitor_shapes(
+            self.cell,
+            _pcell_layer_index(self, "bottom_layer"),
+            _pcell_layer_index(self, "top_layer"),
+            _pcell_layer_index(self, "via_layer"),
+            geometry,
+        )
+
+
+
+def _au_capacitor_geometry(layout, width_um, length_um, top_inset_um, origin=(0, 0)):
+    width_um = float(width_um)
+    length_um = float(length_um)
+    top_inset_um = float(top_inset_um)
+
+    if width_um &amp;lt;= 0 or length_um &amp;lt;= 0:
+        raise ValueError("width_um and length_um must be positive.")
+    if top_inset_um &amp;lt; 0:
+        raise ValueError("top_inset_um must be non-negative.")
+
+    x0 = _to_dbu(origin[0], layout.dbu)
+    y0 = _to_dbu(origin[1], layout.dbu)
+    width_dbu = max(1, _to_dbu(width_um, layout.dbu))
+    length_dbu = max(1, _to_dbu(length_um, layout.dbu))
+    x1 = x0 + width_dbu
+    y1 = y0 + length_dbu
+
+    inset = max(0, _to_dbu(top_inset_um, layout.dbu))
+    max_inset = max(0, min(width_dbu, length_dbu) // 2 - 1)
+    inset = min(inset, max_inset)
+
+    bottom_box = pya.Box(x0, y0, x1, y1)
+    top_box = pya.Box(x0 + inset, y0 + inset, x1 - inset, y1 - inset)
+    return bottom_box, top_box
+
+
+class MIMCapacitorAuPCell(pya.PCellDeclarationHelper):
+    """Technology-specific Au MIM capacitor."""
+
+    def __init__(self):
+        super(MIMCapacitorAuPCell, self).__init__()
+
+        self.param(
+            "width_um",
+            self.TypeDouble,
+            "Width",
+            default=10.0,
+            unit="um",
+            min_value=0.001,
+        )
+        self.param(
+            "length_um",
+            self.TypeDouble,
+            "Length",
+            default=10.0,
+            unit="um",
+            min_value=0.001,
+        )
+        self.param(
+            "bottom_metal_layer",
+            self.TypeLayer,
+            "SD contact - Au",
+            default=DEFAULT_AU_SD_CONTACT_LAYER,
+        )
+        self.param(
+            "top_metal_layer",
+            self.TypeLayer,
+            "Gate - Au",
+            default=DEFAULT_AU_GATE_LAYER,
+        )
+        self.param(
+            "top_inset_um",
+            self.TypeDouble,
+            "Top inset",
+            default=1.0,
+            unit="um",
+            min_value=0.0,
+        )
+
+    def display_text_impl(self):
+        return "MIMCapacitor_Au_{}(W={:.3f}um,L={:.3f}um,inset={:.3f}um)".format(
+            GENERATOR_VERSION,
+            self.width_um,
+            self.length_um,
+            self.top_inset_um,
+        )
+
+    def coerce_parameters_impl(self):
+        min_value = 0.001
+        if self.width_um &amp;lt;= 0:
+            self.width_um = min_value
+        if self.length_um &amp;lt;= 0:
+            self.length_um = min_value
+        if self.top_inset_um &amp;lt; 0:
+            self.top_inset_um = 0.0
+
+        max_inset = min(float(self.width_um), float(self.length_um)) / 2.0
+        if self.top_inset_um &amp;gt;= max_inset:
+            self.top_inset_um = max(0.0, max_inset - self.layout.dbu)
+
+    def produce_impl(self):
+        bottom_box, top_box = _au_capacitor_geometry(
+            self.layout,
+            self.width_um,
+            self.length_um,
+            self.top_inset_um,
+        )
+
+        self.cell.shapes(_pcell_layer_index(self, "bottom_metal_layer")).insert(
+            bottom_box
+        )
+        self.cell.shapes(_pcell_layer_index(self, "top_metal_layer")).insert(top_box)
+
+
+class MOSFETPCell(pya.PCellDeclarationHelper):
+    """Parameterized simplified MOS transistor."""
+
+    def __init__(self):
+        super(MOSFETPCell, self).__init__()
+
+        self.param("L", self.TypeDouble, "Gate length L", default=0.18, unit="um", min_value=0.001)
+        self.param("W", self.TypeDouble, "Gate width W", default=1.0, unit="um", min_value=0.001)
+        self.param(
+            "sd_overlap",
+            self.TypeDouble,
+            "Source/drain overlap",
+            default=0.6,
+            unit="um",
+            min_value=0.001,
+        )
+        self.param(
+            "gate_overlap",
+            self.TypeDouble,
+            "Gate overlap",
+            default=0.2,
+            unit="um",
+            min_value=0.001,
+        )
+        self.param(
+            "contact_size",
+            self.TypeDouble,
+            "Contact size",
+            default=0.2,
+            unit="um",
+            min_value=0.001,
+        )
+        self.param(
+            "contact_pitch",
+            self.TypeDouble,
+            "Contact pitch",
+            default=0.4,
+            unit="um",
+            min_value=0.001,
+        )
+        self.param("draw_metal", self.TypeBoolean, "Draw metal over source/drain", default=True)
+        self.param("active_layer", self.TypeLayer, "Active layer", default=DEFAULT_MOS_ACTIVE_LAYER)
+        self.param("poly_layer", self.TypeLayer, "Poly gate layer", default=DEFAULT_MOS_POLY_LAYER)
+        self.param("sd_layer", self.TypeLayer, "Source/drain layer", default=DEFAULT_MOS_SD_LAYER)
+        self.param("contact_layer", self.TypeLayer, "Contact layer", default=DEFAULT_MOS_CONTACT_LAYER)
+        self.param("metal_layer", self.TypeLayer, "Metal layer", default=DEFAULT_MOS_METAL_LAYER)
+
+    def display_text_impl(self):
+        return "MOSFET_{}(L={:.3f}um,W={:.3f}um)".format(
+            GENERATOR_VERSION,
+            self.L,
+            self.W,
+        )
+
+    def coerce_parameters_impl(self):
+        min_value = 0.001
+        if self.L &amp;lt;= 0:
+            self.L = min_value
+        if self.W &amp;lt;= 0:
+            self.W = min_value
+        if self.sd_overlap &amp;lt;= 0:
+            self.sd_overlap = min_value
+        if self.gate_overlap &amp;lt;= 0:
+            self.gate_overlap = min_value
+        if self.contact_size &amp;lt;= 0:
+            self.contact_size = min_value
+        if self.contact_pitch &amp;lt;= 0:
+            self.contact_pitch = min_value
+
+        max_contact_size = max(min_value, min(float(self.W), float(self.sd_overlap)))
+        if self.contact_size &amp;gt; max_contact_size:
+            self.contact_size = max_contact_size
+        if self.contact_pitch &amp;lt; self.contact_size:
+            self.contact_pitch = self.contact_size
+
+    def produce_impl(self):
+        geometry = _mosfet_geometry(
+            self.layout,
+            self.L,
+            self.W,
+            self.sd_overlap,
+            self.gate_overlap,
+            self.contact_size,
+            self.contact_pitch,
+        )
+
+        _insert_mosfet_shapes(
+            self.cell,
+            _pcell_layer_index(self, "active_layer"),
+            _pcell_layer_index(self, "poly_layer"),
+            _pcell_layer_index(self, "sd_layer"),
+            _pcell_layer_index(self, "contact_layer"),
+            _pcell_layer_index(self, "metal_layer"),
+            geometry,
+            self.draw_metal,
+        )
+
+
+class AIPartsLibrary(pya.Library):
+    """KLayout library containing AI-generated parametric parts."""
+
+    def __init__(self):
+        super(AIPartsLibrary, self).__init__()
+        self.description = "AI-generated parametric layout parts ({})".format(
+            GENERATOR_VERSION
+        )
+        self.layout().register_pcell(PCELL_NAME, MIMCapacitorPCell())
+        self.layout().register_pcell(MOSFET_PCELL_NAME, MOSFETPCell())
+        self.layout().register_pcell(AU_CAPACITOR_PCELL_NAME, MIMCapacitorAuPCell())
+        self.register(LIBRARY_NAME)
+
+
+ai_parts_library = AIPartsLibrary()
+try:
+    pya.Library.refresh_all()
+except Exception:
+    ai_parts_library.refresh()
+
+print("Registered AI_Parts with MIMCapacitor, MOSFET, and MIMCapacitor_Au")
+&lt;/text&gt;
+&lt;/klayout-macro&gt;</text>
+</klayout-macro>

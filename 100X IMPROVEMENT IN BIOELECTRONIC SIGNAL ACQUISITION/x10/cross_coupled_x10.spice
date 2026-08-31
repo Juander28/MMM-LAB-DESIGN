@@ -1,0 +1,62 @@
+** sch_path: /home/claude/simulaciones/x10/cross_coupled_x10.sch
+**.subckt cross_coupled_x10
+VV4 VDD 0 'VDD'
+VV3 n01 actm 0 AC 1
+RR5 actp n01 1k m=1
+RR6 actp actm 1k m=1
+MM7 n02 actm n03 n03 NMOSGEN w=100u l=100u m=1
+MM8 actm n02 n03 n03 NMOSGEN w=100u l=100u m=1
+LL2 VDD xl2 'L/2' m=1
+RL2ser xl2 actm 'RS/2' m=1
+LL4 VDD xl4 'L/2' m=1
+RL4ser xl4 n02 'RS/2' m=1
+CC1 actm n02 'c1' m=1
+CC6 actp n02 'cp' m=1
+IItail_src3 n03 0 'Itail'
+MM17 n04 actm n05 n05 NMOSGEN w=100u l=100u m=1
+MM18 actm n04 n05 n05 NMOSGEN w=100u l=100u m=1
+LL16 VDD xl16 'L/2' m=1
+RL16ser xl16 actm 'RS/2' m=1
+LL17 VDD xl17 'L/2' m=1
+RL17ser xl17 n04 'RS/2' m=1
+CC16 actm n04 'c6' m=1
+CC17 actp n04 'cp' m=1
+IItail_src8 n05 0 'Itail'
+MM21 n06 actm n07 n07 NMOSGEN w=100u l=100u m=1
+MM22 actm n06 n07 n07 NMOSGEN w=100u l=100u m=1
+LL20 VDD xl20 'L/2' m=1
+RL20ser xl20 actm 'RS/2' m=1
+LL21 VDD xl21 'L/2' m=1
+RL21ser xl21 n06 'RS/2' m=1
+CC20 actm n06 'c8' m=1
+CC21 actp n06 'cp' m=1
+IItail_src10 n07 0 'Itail'
+MM25 n08 actm n09 n09 NMOSGEN w=100u l=100u m=1
+MM26 actm n08 n09 n09 NMOSGEN w=100u l=100u m=1
+CC24 actm n08 'c10' m=1
+CC25 actp n08 'cp' m=1
+IItail_src12 n09 0 'Itail'
+LL1 VDD xl1 'L/2' m=1
+RL1ser xl1 actm 'RS/2' m=1
+LL3 VDD xl3 'L/2' m=1
+RL3ser xl3 n08 'RS/2' m=1
+**** begin user architecture code
+
+.param VDD=1.5 L=30n RS=1.5 RT=25
+.param Itail=180u cp=0.4p
+.param C1=21.108p C2=25.1209p C3=30.396p C4=37.526p C5=47.494p C6=62.033p C7=84.434p C8=121.585p
++ C9=189.977p C10=337.737p
+.include models/nmosgen_x10.lib
+.ac dec 20000 10Meg 250Meg
+
+
+.control
+run
+let vact = v(actp)-v(actm)
+wrdata x10_ac.csv vact
+quit
+.endc
+
+**** end user architecture code
+**.ends
+.end

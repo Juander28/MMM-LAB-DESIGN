@@ -1,0 +1,195 @@
+v {xschem version=3.4.8RC file_version=1.3
+* IGZO TFT output characteristics - UCI/INRF process (igzo_mmm_lab)
+*
+* Sweeps Id against Vds at several Vgs on the device the model was validated
+* against: W = 1000 um, L = 8 um.  At Vgs = 6 V, Vds = 10 V the measurement
+* gives 670-701 uA and this netlist gives ~654 uA.
+*
+* Both limits of the model are visible here: it is DC-only, and it is valid
+* for Vgs <= 6 V and Vds <= 10 V.  The sweep deliberately stops there.
+}
+G {}
+K {}
+V {}
+S {}
+F {}
+E {}
+N 380 -590 380 -560 {lab=#net1}
+N 380 -680 380 -650 {lab=#net2}
+N 530 -590 530 -570 {lab=#net1}
+N 530 -690 530 -650 {lab=#net3}
+N 380 -560 530 -560 {lab=#net1}
+N 530 -570 530 -560 {lab=#net1}
+N 260 -870 420 -870 {lab=VDD}
+N 420 -870 510 -870 {lab=VDD}
+N 490 -870 490 -840 {lab=VDD}
+N 420 -870 420 -840 {lab=VDD}
+N 380 -810 380 -680 {lab=#net2}
+N 530 -810 530 -690 {lab=#net3}
+N 440 -500 440 -450 {lab=VSS}
+N 260 -870 260 -800 {lab=VDD}
+N 260 -740 260 -560 {lab=#net4}
+N 150 -720 260 -720 {lab=#net4}
+N 150 -800 150 -780 {lab=VDD}
+N 150 -870 260 -870 {lab=VDD}
+N 150 -870 150 -800 {lab=VDD}
+N 260 -500 260 -450 {lab=VSS}
+N 650 -500 670 -500 {lab=#net5}
+N 300 -770 380 -770 {lab=#net2}
+N 110 -750 110 -690 {lab=#net3}
+N 110 -690 530 -690 {lab=#net3}
+N 380 -770 570 -770 {lab=#net2}
+N 610 -740 610 -530 {lab=#net5}
+N 710 -660 710 -530 {lab=#net6}
+N 530 -690 670 -690 {lab=#net3}
+N 510 -870 530 -870 {lab=VDD}
+N 710 -870 710 -720 {lab=VDD}
+N 530 -870 710 -870 {lab=VDD}
+N 610 -870 610 -800 {lab=VDD}
+N 800 -870 800 -790 {lab=VDD}
+N 710 -870 800 -870 {lab=VDD}
+N 800 -730 800 -600 {lab=OUT}
+N 760 -870 760 -760 {lab=VDD}
+N 710 -570 760 -570 {lab=#net6}
+N 260 -450 800 -450 {lab=VSS}
+N 800 -540 800 -450 {lab=VSS}
+N 710 -470 710 -450 {lab=VSS}
+N 610 -470 610 -450 {lab=VSS}
+N 300 -530 400 -530 {lab=#net4}
+N 260 -590 300 -590 {lab=#net4}
+N 300 -590 300 -530 {lab=#net4}
+N 800 -660 820 -660 {lab=OUT}
+N 610 -550 660 -550 {lab=#net5}
+N 660 -550 660 -500 {lab=#net5}
+C {devices/title.sym} 160 -30 0 0 {name=l5 author="UCI/INRF - MMM Lab"}
+C {symbols/tft_igzo.sym} 360 -620 0 0 {name=M4
+W=3200u
+L=25u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 550 -620 0 1 {name=M3
+W=3200u
+L=25u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 400 -840 0 1 {name=M6
+W=50u
+L=200u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 510 -840 0 0 {name=M7
+W=50u
+L=200u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 420 -530 0 0 {name=M8
+W=200u
+L=200u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 280 -770 0 1 {name=M10
+W=200u
+L=200u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {iopin.sym} 800 -870 0 0 {name=p2 lab=VDD}
+C {ipin.sym} 340 -620 3 0 {name=p3 lab=INN}
+C {symbols/tft_igzo.sym} 630 -500 0 1 {name=M17
+W=200u
+L=100u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {iopin.sym} 440 -450 1 0 {name=p4 lab=VSS}
+C {opin.sym} 820 -660 0 0 {name=p8 lab=OUT}
+C {symbols/tft_igzo.sym} 130 -750 0 0 {name=M1
+W=200u
+L=200u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {ipin.sym} 570 -620 3 0 {name=p1 lab=INP}
+C {symbols/tft_igzo.sym} 280 -530 0 1 {name=M2
+W=140u
+L=200u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 690 -500 0 0 {name=M9
+W=200u
+L=200u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 590 -770 0 0 {name=M11
+W=50u
+L=800u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 690 -690 0 0 {name=M5
+W=50u
+L=800u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 780 -570 0 0 {name=M12
+W=1300u
+L=140u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}
+C {symbols/tft_igzo.sym} 780 -760 0 0 {name=M13
+W=140u
+L=200u
+ov=5u
+nf=1
+m=1
+model=igzo_tft
+spiceprefix=X
+}

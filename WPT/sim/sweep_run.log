@@ -1,0 +1,79 @@
+Sweeps on the full link.
+  TFT  W = 6000 um, L = 5 um, ov = 2 um
+  load 10000 ohm, drive 1000 W
+
+=== 1. frequency (transmitter re-tuned at each point) ===
+     f (kHz)   vout (V)     pin (W)     eta
+       100.0   8.37420e-02  1.0001e+03  7.0122e-10
+       150.0   1.71836e-01  9.9782e+02  2.9592e-09
+       200.0   2.69990e-01  9.9047e+02  7.3596e-09
+       250.0   3.75241e-01  9.7703e+02  1.4412e-08
+       300.0   4.85218e-01  9.5836e+02  2.4567e-08
+       350.0   5.98976e-01  9.3580e+02  3.8339e-08
+       400.0   7.15982e-01  9.1085e+02  5.6280e-08
+       450.0   8.35242e-01  8.8461e+02  7.8863e-08
+       500.0   9.56857e-01  8.5791e+02  1.0672e-07
+  -> best at 500 kHz, eta = 1.0672e-07
+  transmitter left untuned: vout = 8.6297e-04 V, eta = 1.5438e-10
+     - a factor of 691 in efficiency.  The series capacitor on the
+       transmit side is not optional.
+
+=== 2. distance ===
+     z (mm)    k           vout (V)     eta
+          1    7.1621e-03  2.28355e+00  6.0783e-07
+          2    6.1598e-03  1.89836e+00  4.2006e-07
+          3    5.1982e-03  1.53710e+00  2.7540e-07
+          5    3.5840e-03  9.56857e-01  1.0672e-07
+          8    2.0258e-03  4.42504e-01  2.2825e-08
+         12    1.0104e-03  1.52755e-01  2.7199e-09
+         20    3.3310e-04  1.66036e-02  3.2134e-11
+
+=== 3. load ===
+     R (ohm)     vout (V)     pout (W)     eta
+           100   1.68736e-02  2.8472e-06  3.3192e-09
+           300   5.07060e-02  8.5703e-06  9.9896e-09
+          1000   1.60443e-01  2.5742e-05  3.0010e-08
+          3000   4.15598e-01  5.7574e-05  6.7110e-08
+         10000   9.56857e-01  9.1558e-05  1.0672e-07
+         30000   1.57882e+00  8.3089e-05  9.6851e-08
+        100000   2.07640e+00  4.3114e-05  5.0255e-08
+        300000   2.09987e+00  1.4698e-05  1.7133e-08
+       1000000   1.47090e+00  2.1635e-06  2.5219e-09
+  -> best at 10000 ohm, eta = 1.0672e-07
+
+=== 4. the coupling capacitor ===
+  reference, no extra capacitor: vout = 9.56857e-01 V, eta = 1.0672e-07
+
+  shunt across the receive coil:
+     C            vout (V)     eta          vs reference
+     open         9.56857e-01  1.0672e-07  +0.00 %
+     1e-12 F      9.56603e-01  1.0667e-07  -0.05 %
+     1e-11 F      9.54869e-01  1.0628e-07  -0.42 %
+     1e-10 F      9.32931e-01  1.0145e-07  -4.94 %
+     1e-09 F      4.38650e-01  2.2429e-08  -78.98 %
+     1e-08 F      1.01822e-02  1.2085e-11  -99.99 %
+     1e-07 F      1.02105e-04  1.2152e-15  -100.00 %
+     1e-06 F      1.02450e-06  1.2235e-19  -100.00 %
+     2e-06 F      2.57659e-07  7.7390e-21  -100.00 %
+     1e-05 F      1.07471e-08  1.3488e-23  -100.00 %
+     -> best 1.0672e-07, a factor of 1.0000 on the reference
+        No improvement.  A resonance multiplies a voltage
+        by the loop's Q, and this loop's Q is far below 1.
+
+  shunt at the rectifier input:
+     C            vout (V)     eta          vs reference
+     open         9.56857e-01  1.0672e-07  +0.00 %
+     1e-12 F      9.56602e-01  1.0666e-07  -0.05 %
+     1e-11 F      9.54868e-01  1.0628e-07  -0.42 %
+     1e-10 F      9.32922e-01  1.0145e-07  -4.94 %
+     1e-09 F      4.38640e-01  2.2429e-08  -78.98 %
+     1e-08 F      1.01822e-02  1.2085e-11  -99.99 %
+     1e-07 F      1.02107e-04  1.2153e-15  -100.00 %
+     1e-06 F      1.02479e-06  1.2242e-19  -100.00 %
+     2e-06 F      2.57742e-07  7.7440e-21  -100.00 %
+     1e-05 F      1.07515e-08  1.3499e-23  -100.00 %
+     -> best 1.0672e-07, a factor of 1.0000 on the reference
+        No improvement.  A resonance multiplies a voltage
+        by the loop's Q, and this loop's Q is far below 1.
+
+wrote sweeps.json and sweeps.csv (45 points)

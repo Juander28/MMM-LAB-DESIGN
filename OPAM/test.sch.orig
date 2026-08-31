@@ -1,0 +1,50 @@
+v {xschem version=3.4.8RC file_version=1.3
+* IGZO TFT output characteristics - UCI/INRF process (igzo_mmm_lab)
+*
+* Sweeps Id against Vds at several Vgs on the device the model was validated
+* against: W = 1000 um, L = 8 um.  At Vgs = 6 V, Vds = 10 V the measurement
+* gives 670-701 uA and this netlist gives ~654 uA.
+*
+* Both limits of the model are visible here: it is DC-only, and it is valid
+* for Vgs <= 6 V and Vds <= 10 V.  The sweep deliberately stops there.
+}
+G {}
+K {}
+V {}
+S {}
+F {}
+E {}
+C {devices/code_shown.sym} 20 -160 0 0 {name=MODELS only_toplevel=true
+format="tcleval( @value )"
+value="
+.include $::IGZO_MODELS/design.ngspice
+.lib $::IGZO_MODELS/igzo_mmm_lab.ngspice best
+"}
+C {devices/lab_pin.sym} 40 -270 0 0 {name=l1 sig_type=std_logic lab=INN}
+C {devices/lab_pin.sym} 340 -270 2 0 {name=l2 sig_type=std_logic lab=VDD}
+C {devices/lab_pin.sym} 40 -250 0 0 {name=l3 sig_type=std_logic lab=INP}
+C {devices/code_shown.sym} 940 -320 0 1 {name=NGSPICE only_toplevel=true
+value="
+.control
+save all
+dc V4 -10 10 0.1 
+plot v(OUT)
+.endc
+"}
+C {devices/title.sym} 160 -30 0 0 {name=l5 author="UCI/INRF - MMM Lab"}
+C {MMM-LAB DESIGN/OPAM/OPAM.sym} 190 -240 0 0 {name=x1}
+C {devices/lab_pin.sym} 340 -250 2 0 {name=l4 sig_type=std_logic lab=OUT}
+C {devices/lab_pin.sym} 340 -230 2 0 {name=l6 sig_type=std_logic lab=BIAS}
+C {vsource.sym} 130 -430 0 0 {name=V1 value=6 savecurrent=false}
+C {gnd.sym} 130 -400 0 0 {name=l8 lab=0}
+C {devices/lab_pin.sym} 130 -460 2 0 {name=l7 sig_type=std_logic lab=VDD}
+C {vsource.sym} 185 -430 0 0 {name=V2 value=6 savecurrent=false}
+C {gnd.sym} 185 -400 0 0 {name=l9 lab=0}
+C {vsource.sym} 230 -430 0 0 {name=V3 value=2.5 savecurrent=false}
+C {gnd.sym} 230 -400 0 0 {name=l11 lab=0}
+C {vsource.sym} 275 -430 0 0 {name=V4 value=2.5 savecurrent=false}
+C {gnd.sym} 340 -205 0 0 {name=l17 lab=0}
+C {devices/lab_pin.sym} 185 -460 2 0 {name=l10 sig_type=std_logic lab=BIAS}
+C {devices/lab_pin.sym} 230 -460 2 0 {name=l12 sig_type=std_logic lab=INP}
+C {devices/lab_pin.sym} 275 -460 2 0 {name=l13 sig_type=std_logic lab=INN}
+C {devices/lab_pin.sym} 275 -400 2 0 {name=l14 sig_type=std_logic lab=INP}

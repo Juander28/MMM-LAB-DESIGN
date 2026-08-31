@@ -1,0 +1,43 @@
+LTspice 24.1.10 for Windows
+Circuit: I:\My Drive\UCI\PHD\RESEARCH\100X IMPROVEMENT IN BIOELECTRONIC SIGNAL ACQUISITION\BIOELECTRONIC SIGNAL ADQUISITION\SIMULATION\X1\CROSS COUPLED_combined.net
+Start Time: Mon Aug 17 20:54:42 2026
+solver = Normal
+Maximum thread count: 16
+tnom = 27
+temp = 27
+method = trap
+Direct Newton iteration for .op point succeeded.
+.step itail=0.0009 cp=1e-13
+.step itail=0.000925 cp=1e-13
+.step itail=0.00095 cp=1e-13
+.step itail=0.000975 cp=1e-13
+.step itail=0.001 cp=1e-13
+.step itail=0.0009 cp=1.1e-12
+.step itail=0.000925 cp=1.1e-12
+.step itail=0.00095 cp=1.1e-12
+.step itail=0.000975 cp=1.1e-12
+.step itail=0.001 cp=1.1e-12
+.step itail=0.0009 cp=2.1e-12
+.step itail=0.000925 cp=2.1e-12
+.step itail=0.00095 cp=2.1e-12
+.step itail=0.000975 cp=2.1e-12
+.step itail=0.001 cp=2.1e-12
+.step itail=0.0009 cp=3.1e-12
+.step itail=0.000925 cp=3.1e-12
+.step itail=0.00095 cp=3.1e-12
+.step itail=0.000975 cp=3.1e-12
+.step itail=0.001 cp=3.1e-12
+.step itail=0.0009 cp=3.2e-12
+.step itail=0.000925 cp=3.2e-12
+.step itail=0.00095 cp=3.2e-12
+.step itail=0.000975 cp=3.2e-12
+.step itail=0.001 cp=3.2e-12
+Total elapsed time: 20.394 seconds.
+
+Files loaded:
+I:\My Drive\UCI\PHD\RESEARCH\100X IMPROVEMENT IN BIOELECTRONIC SIGNAL ACQUISITION\BIOELECTRONIC SIGNAL ADQUISITION\SIMULATION\X1\CROSS COUPLED_combined.net
+C:\Users\juand\AppData\Local\LTspice\lib\cmp\standard.mos
+
+I:\My Drive\UCI\PHD\RESEARCH\100X IMPROVEMENT IN BIOELECTRONIC SIGNAL ACQUISITION\BIOELECTRONIC SIGNAL ADQUISITION\SIMULATION\X1\CROSS COUPLED_combined.net(48): No such parameter defined.
+.meas AC fpeak FIND frequency WHEN V(D1,D2)=MAX
+                                            ^^^

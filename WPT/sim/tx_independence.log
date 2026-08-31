@@ -1,0 +1,6 @@
+Ranking the receive coils against two different transmitters.
+
+  pancake, 20t AWG26, 10 mm, z=5 mm      -> square w=35 gap=5 n=7  C=2uF  f=498kHz  FOM=3.804e-05
+  solenoid, 40t AWG22, 30 mm, z=5 mm     -> square w=35 gap=5 n=7  C=2uF  f=498kHz  FOM=3.522e-05
+
+  SAME WINNER - the ranking is a property of the receiver

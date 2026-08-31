@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Componentes del Esquemático — Resonador Q-Mejorado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body.lang-es .lang-en { display: none !important; }
+        body.lang-en .lang-es { display: none !important; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .academic-text { line-height: 1.8; color: #334155; }
+        .academic-text p { margin-bottom: 1rem; text-align: justify; }
+        .academic-text h2 { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+        .academic-text h3 { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .math-block { background: #f8fafc; padding: 1.25rem; border-radius: 0.5rem; margin: 1.25rem 0; overflow-x: auto; text-align: center; border: 1px solid #e2e8f0; }
+        .param-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+        .param-table th { background: #1e293b; color: white; padding: 0.6rem 0.75rem; text-align: left; border: 1px solid #334155; }
+        .param-table td { padding: 0.6rem 0.75rem; border: 1px solid #cbd5e1; vertical-align: top; }
+        .param-table tr:nth-child(even) { background: #f8fafc; }
+        .code-inline { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.8rem; color: #1d4ed8; border: 1px solid #e2e8f0; }
+        .code-block { background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; font-family: monospace; font-size: 0.78rem; overflow-x: auto; line-height: 1.6; }
+        .insight-box { background: #eff6ff; border-left: 4px solid #2563eb; padding: 1rem 1.25rem; border-radius: 0 0.5rem 0.5rem 0; margin: 1rem 0; }
+        .warning-box { background: #fefce8; border-left: 4px solid #ca8a04; padding: 1rem 1.25rem; border-radius: 0 0.5rem 0.5rem 0; margin: 1rem 0; }
+        .node-tag { display: inline-block; background: #1e40af; color: white; padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-family: monospace; font-weight: 600; }
+        .component-badge { display: inline-block; background: #065f46; color: white; padding: 0.15rem 0.5rem; border-radius: 0.3rem; font-size: 0.75rem; font-family: monospace; font-weight: 600; }
+        .ascii-diagram { background: #0f172a; color: #86efac; padding: 1.25rem; border-radius: 0.5rem; font-family: 'Courier New', monospace; font-size: 0.78rem; line-height: 1.7; overflow-x: auto; margin: 1rem 0; white-space: pre; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-100 lang-es text-slate-800 min-h-screen flex flex-col">
+
+<!-- HEADER -->
+<header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+            <div class="flex-shrink-0 font-bold text-lg tracking-wider">
+                <span class="text-blue-400">Esquemático</span>Explicado
+                <span class="text-xs text-slate-400 font-normal ml-2">| Resonador Cross-Coupled A.1</span>
+            </div>
+            <button onclick="toggleLanguage()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-medium transition-colors border border-slate-500">
+                <span class="lang-es">Switch to English</span>
+                <span class="lang-en">Cambiar a Español</span>
+            </button>
+        </div>
+    </div>
+    <div class="bg-slate-800 border-t border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex space-x-2 overflow-x-auto py-3">
+                <button onclick="switchTab('tab-inductor')" id="btn-tab-inductor" class="tab-btn bg-blue-600 text-white px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-colors">
+                    <span class="lang-es">1. Inductores L1/L2</span>
+                    <span class="lang-en">1. Inductors L1/L2</span>
+                </button>
+                <button onclick="switchTab('tab-varactor')" id="btn-tab-varactor" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-colors">
+                    <span class="lang-es">2. Varactores Cv1/Cv2</span>
+                    <span class="lang-en">2. Varactors Cv1/Cv2</span>
+                </button>
+                <button onclick="switchTab('tab-nmos')" id="btn-tab-nmos" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-colors">
+                    <span class="lang-es">3. Par Cruzado M1/M2 + Itail</span>
+                    <span class="lang-en">3. Cross-Coupled M1/M2 + Itail</span>
+                </button>
+                <button onclick="switchTab('tab-bias')" id="btn-tab-bias" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-colors">
+                    <span class="lang-es">4. Polarización Rb/VBIAS</span>
+                    <span class="lang-en">4. Bias Network Rb/VBIAS</span>
+                </button>
+                <button onclick="switchTab('tab-tl')" id="btn-tab-tl" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-colors">
+                    <span class="lang-es">5. Acoplamiento Cc/R_TL</span>
+                    <span class="lang-en">5. TL Coupling Cc/R_TL</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main class="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+
+<!-- ================================================================
+     TAB 1: INDUCTORES L1 / L2
+     ================================================================ -->
+<div id="tab-inductor" class="tab-content active academic-text">
+
+    <!-- ES -->
+    <div class="lang-es">
+        <h2>Inductores L1 y L2: El Tanque LC con Toma Central</h2>
+
+        <p>El tanque LC es el núcleo del resonador. En lugar de usar un solo inductor, el esquemático divide la inductancia total $L$ en dos mitades iguales: <span class="component-badge">L1 = L/2</span> y <span class="component-badge">L2 = L/2</span>, conectadas simétricamente desde el nodo <span class="node-tag">VDD</span> hacia los nodos de drenaje <span class="node-tag">D1</span> y <span class="node-tag">D2</span>. Esta configuración se llama <strong>inductor diferencial con toma central</strong> (<em>center-tapped</em>).</p>
+
+        <div class="ascii-diagram">
+              VDD (toma central = tierra RF diferencial)
+               │
+        ───────┼───────
+        │             │
+      L/2           L/2
+    (Rser=RS/2)  (Rser=RS/2)
+        │             │
+        D1            D2
+    (salida +)    (salida -)
+        </div>
+
+        <h3>¿Por qué dos inductores en vez de uno?</h3>
+
+        <p>El circuito opera en modo <strong>diferencial puro</strong>: cuando D1 sube, D2 baja en igual magnitud (anti-fase). El centro del inductor — el nodo VDD — es un <strong>tierra virtual RF</strong> para señales diferenciales, porque las corrientes de L1 y L2 se cancelan ahí. Esto implica:</p>
+
+        <ul style="list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; space-y: 0.5rem;">
+            <li style="margin-bottom:0.5rem;"><strong>Alimentación DC integrada:</strong> A frecuencias de audio y DC, L1 y L2 son cortocircuitos, así que VDD llega directamente a D1 y D2 como fuente de polarización para los NMOS. No se necesita un choke RF separado.</li>
+            <li style="margin-bottom:0.5rem;"><strong>Simetría perfecta:</strong> Ambas mitades son idénticas, garantizando que D1 y D2 experimenten exactamente el mismo entorno de ruido e impedancia. Una asimetría en L crearía una componente de modo común que degradaría el rechazo de ruido.</li>
+            <li style="margin-bottom:0.5rem;"><strong>Modelo de medio circuito:</strong> Para el análisis, cada mitad diferencial puede estudiarse independientemente: un circuito de medio inductor <em>L/2</em> con capacitor <em>C₀</em> y NMOS de transconductancia <em>g_m</em>.</li>
+        </ul>
+
+        <h3>Parámetros y ecuaciones del tanque</h3>
+
+        <p>Cada mitad del inductor tiene resistencia en serie <span class="code-inline">Rser = RS/2</span>, modelando las pérdidas resistivas del metal (solenoides de Cu apilados en microfabricación). La <strong>frecuencia de resonancia</strong> del tanque diferencial es:</p>
+
+        <div class="math-block">
+            $$f_0 = \frac{1}{2\pi\sqrt{\dfrac{L}{2} \cdot C_0}}$$
+        </div>
+
+        <p>donde $C_0$ es la capacitancia de un solo varactor (en el modelo de medio circuito, cada mitad ve su propio varactor $C_0$). Con los parámetros del archivo .asc:</p>
+
+        <div class="math-block">
+            $$f_0 = \frac{1}{2\pi\sqrt{20\,\text{nH} \times 32\,\text{fF}}} \approx \frac{1}{2\pi \times 25.3\,\text{ps}} \approx 6.3\,\text{GHz}$$
+        </div>
+
+        <div class="warning-box">
+            <strong>Nota de escala:</strong> Los parámetros del .asc (<em>L</em>=40 nH, <em>C₀</em>=32 fF) son para un modelo de demostración que resuena en ~6 GHz. Para apuntar a 200 MHz necesitarías $C_0 \approx 16\,\text{pF}$ con el mismo <em>L</em>, o $L \approx 1\,\mu\text{H}$ con el mismo $C_0$. Los valores demuestran la topología y el comportamiento de mejora-Q independientemente del rango de frecuencia.
+        </div>
+
+        <h3>Factor Q intrínseco del inductor</h3>
+
+        <p>La resistencia en serie $R_S$ modela las pérdidas Joule en el metal. El factor Q sin carga del tanque es:</p>
+
+        <div class="math-block">
+            $$Q_0 = \frac{\omega_0 L}{R_S} = \frac{2\pi f_0 \cdot L}{R_S}$$
+        </div>
+
+        <p>La resistencia paralela equivalente del tanque — que determina cuánta energía se pierde por ciclo — es:</p>
+
+        <div class="math-block">
+            $$R_p = Q_0^2 \cdot R_S = Q_0 \cdot \omega_0 L = \frac{(\omega_0 L)^2}{R_S}$$
+        </div>
+
+        <p>A 200 MHz con $L=40\,\text{nH}$, $R_S=0.6\,\Omega$:</p>
+
+        <div class="math-block">
+            $$Q_0 = \frac{2\pi \times 200\,\text{MHz} \times 40\,\text{nH}}{0.6\,\Omega} \approx 84 \qquad R_p = \frac{(2\pi \times 200\,\text{MHz} \times 40\,\text{nH})^2}{0.6\,\Omega} \approx 4.2\,\text{k}\Omega$$
+        </div>
+
+        <p>Este $R_p$ es el parámetro que define cuánta transconductancia negativa se necesita para cancelar las pérdidas y elevar el Q. Un inductor con mayor $R_p$ requiere menos $g_m$ (y por tanto menos corriente y potencia).</p>
+
+        <table class="param-table">
+            <tr><th>Parámetro</th><th>Símbolo</th><th>Valor (.asc)</th><th>Rol en el diseño</th></tr>
+            <tr><td><code>L</code></td><td>$L$</td><td>40 nH</td><td>Inductancia total diferencial; cada mitad = 20 nH</td></tr>
+            <tr><td><code>RS</code></td><td>$R_S$</td><td>0.6 Ω</td><td>Pérdidas del metal; da $Q_0 \approx 84$ a 200 MHz</td></tr>
+            <tr><td><code>L/2</code></td><td>$L_1 = L_2$</td><td>20 nH</td><td>Cada mitad del inductor partido</td></tr>
+            <tr><td><code>RS/2</code></td><td>$R_{ser}$</td><td>0.3 Ω</td><td>Resistencia en serie de cada mitad</td></tr>
+        </table>
+
+        <h3>Referencias</h3>
+        <p>Razavi, B. (2011). <em>Design of Analog CMOS Integrated Circuits</em>, cap. 15 (LC Oscillators). — Ham, D. & Hajimiri, A. (2001). "Concepts and methods in optimization of integrated LC VCOs," <em>IEEE JSSC</em> 36(6):962–975.</p>
+    </div>
+
+    <!-- EN -->
+    <div class="lang-en">
+        <h2>Inductors L1 and L2: The Center-Tapped LC Tank</h2>
+
+        <p>The LC tank is the heart of the resonator. Rather than using a single inductor, the schematic splits the total inductance $L$ into two equal halves: <span class="component-badge">L1 = L/2</span> and <span class="component-badge">L2 = L/2</span>, connected symmetrically from <span class="node-tag">VDD</span> to the drain nodes <span class="node-tag">D1</span> and <span class="node-tag">D2</span>. This configuration is called a <strong>center-tapped differential inductor</strong>.</p>
+
+        <div class="ascii-diagram">
+              VDD (center tap = RF virtual ground for differential signals)
+               │
+        ───────┼───────
+        │             │
+      L/2           L/2
+    (Rser=RS/2)  (Rser=RS/2)
+        │             │
+        D1            D2
+    (output +)    (output -)
+        </div>
+
+        <h3>Why two inductors instead of one?</h3>
+
+        <p>The circuit operates in <strong>pure differential mode</strong>: when D1 rises, D2 falls by the same amount (anti-phase). The center of the inductor — the VDD node — is an RF <strong>virtual ground</strong> for differential signals, because the currents of L1 and L2 cancel there. This means:</p>
+
+        <ul style="list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem;">
+            <li style="margin-bottom:0.5rem;"><strong>Integrated DC supply:</strong> At DC and audio frequencies, L1 and L2 are short circuits, so VDD reaches D1 and D2 directly as bias. No separate RF choke is needed.</li>
+            <li style="margin-bottom:0.5rem;"><strong>Perfect symmetry:</strong> Both halves are identical, ensuring D1 and D2 see exactly the same noise and impedance environment. An asymmetry in L would create a common-mode component degrading noise rejection.</li>
+            <li style="margin-bottom:0.5rem;"><strong>Half-circuit model:</strong> For analysis, each differential half can be studied independently: a half-inductor <em>L/2</em> with capacitor <em>C₀</em> and NMOS of transconductance <em>g_m</em>.</li>
+        </ul>
+
+        <h3>Tank parameters and equations</h3>
+
+        <p>Each inductor half has series resistance <span class="code-inline">Rser = RS/2</span>, modeling resistive losses in the metal (stacked Cu solenoids in microfabrication). The differential tank <strong>resonant frequency</strong> is:</p>
+
+        <div class="math-block">
+            $$f_0 = \frac{1}{2\pi\sqrt{\dfrac{L}{2} \cdot C_0}}$$
+        </div>
+
+        <p>The <strong>unloaded quality factor</strong> and <strong>parallel tank resistance</strong> are:</p>
+
+        <div class="math-block">
+            $$Q_0 = \frac{\omega_0 L}{R_S} \qquad R_p = \frac{(\omega_0 L)^2}{R_S}$$
+        </div>
+
+        <p>At 200 MHz with $L=40\,\text{nH}$, $R_S=0.6\,\Omega$: $Q_0 \approx 84$, $R_p \approx 4.2\,\text{k}\Omega$. This $R_p$ is the parameter that defines how much negative transconductance is needed to cancel losses and boost Q. A higher $R_p$ inductor requires less $g_m$ (less current, less power).</p>
+
+        <table class="param-table">
+            <tr><th>Parameter</th><th>Symbol</th><th>Value (.asc)</th><th>Role</th></tr>
+            <tr><td><code>L</code></td><td>$L$</td><td>40 nH</td><td>Total differential inductance; each half = 20 nH</td></tr>
+            <tr><td><code>RS</code></td><td>$R_S$</td><td>0.6 Ω</td><td>Metal losses; gives $Q_0 \approx 84$ at 200 MHz</td></tr>
+            <tr><td><code>L/2</code></td><td>$L_1 = L_2$</td><td>20 nH</td><td>Each split inductor half</td></tr>
+            <tr><td><code>RS/2</code></td><td>$R_{ser}$</td><td>0.3 Ω</td><td>Series resistance of each half</td></tr>
+        </table>
+
+        <h3>References</h3>
+        <p>Razavi, B. (2011). <em>Design of Analog CMOS Integrated Circuits</em>, ch. 15. — Ham, D. & Hajimiri, A. (2001). "Concepts and methods in optimization of integrated LC VCOs," <em>IEEE JSSC</em> 36(6):962–975.</p>
+    </div>
+</div>
+
+<!-- ================================================================
+     TAB 2: VARACTORES Cv1 / Cv2
+     ================================================================ -->
+<div id="tab-varactor" class="tab-content academic-text">
+
+    <!-- ES -->
+    <div class="lang-es">
+        <h2>Varactores Cv1 y Cv2: Capacitores Controlados por Voltaje</h2>
+
+        <h3>¿Qué es un varactor?</h3>
+        <p>Un <strong>varactor</strong> (variable reactor) es un dispositivo cuya capacitancia eléctrica cambia con el voltaje aplicado. En implementaciones físicas se usa típicamente un transistor NMOS en modo de acumulación (MOS varactor), cuya capacitancia gate-cuerpo $C_{GB}$ depende de $V_{GB}$. En el modelo LTspice se usa un <strong>capacitor conductual</strong> que captura el mismo comportamiento de forma idealizada.</p>
+
+        <h3>¿Por qué los varactores están en el tanque LC?</h3>
+        <p>La frecuencia de resonancia del tanque es $f_0 = 1/(2\pi\sqrt{LC})$. Si la capacitancia $C$ cambia con la señal EMG (la señal muscular que queremos detectar), entonces $f_0$ cambia con EMG. Un receptor externo que barre frecuencias puede entonces leer la señal muscular como un desplazamiento de frecuencia — sin cables, sin amplificadores directos, solo FM implantada.</p>
+
+        <h3>Conexión física: ¿por qué D1→emg_p y D2→emg_n?</h3>
+
+        <div class="ascii-diagram">
+     D1 ──────[Cv1]────── emg_p
+     (nodo RF)   ↑        (nodo de control)
+                 │
+        Capacitancia = C₀·(1 + α·V(emg_p, emg_n))
+                 │
+     D2 ──────[Cv2]────── emg_n
+     (nodo RF)            (nodo de control)
+        </div>
+
+        <p>Los varactores tienen <strong>dos terminales RF</strong> (D1/D2 y emg_p/emg_n) que forman parte del tanque de resonancia. La corriente RF fluye entre estos terminales. Sin embargo, la <strong>capacitancia</strong> no depende del voltaje RF entre esos terminales — depende de un voltaje diferente: $V(\text{emg\_p}, \text{emg\_n})$, que es la señal EMG.</p>
+
+        <div class="insight-box">
+            <strong>La ecuación conductual en LTspice:</strong><br>
+            <code>Q = C₀ · (1 + α · V(emg_p, emg_n)) · x</code><br><br>
+            Donde <em>x</em> es el voltaje entre los terminales del capacitor (voltaje RF: $V(D1, \text{emg\_p})$ para Cv1). La carga almacenada es $Q = C_{ef} \cdot V_{RF}$, con $C_{ef} = C_0 \cdot (1 + \alpha \cdot V_{EMG})$.
+        </div>
+
+        <h3>¿Por qué separar el voltaje de control de los terminales RF?</h3>
+
+        <p>Esta es la pregunta más importante sobre los varactores. Hay dos razones físicas fundamentales:</p>
+
+        <p><strong>Razón 1 — Linealidad y separación de escalas temporales:</strong> La señal EMG es de baja frecuencia (0–500 Hz). El tanque RF oscila a cientos de MHz o GHz. Si la capacitancia dependiera del voltaje RF instantáneo (voltaje de los propios terminales), el carrier RF — que puede tener decenas o cientos de mV de amplitud — modularía $C$ en cada ciclo RF, causando:</p>
+        <ul style="list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem;">
+            <li style="margin-bottom:0.4rem;">Distorsión armónica: generación de frecuencias $2f_0$, $3f_0$, etc.</li>
+            <li style="margin-bottom:0.4rem;">Ruido de fase: la modulación AM del oscilador se convierte en FM (ruido de fase).</li>
+            <li style="margin-bottom:0.4rem;">Productos de intermodulación entre los 1000+ canales FDM del sistema.</li>
+        </ul>
+        <p>Al usar un voltaje de control <em>separado</em> ($V_{\text{EMG}}$ a 100 Hz), la capacitancia varía <em>lentamente</em> comparado con el período RF. En cada ciclo RF, el varactor se comporta como un capacitor fijo de valor $C_0(1+\alpha V_{\text{EMG}}(t))$, donde $V_{\text{EMG}}(t)$ apenas cambia durante un ciclo RF. Esto se llama <strong>modulación paramétrica adiabática</strong>.</p>
+
+        <p><strong>Razón 2 — El rol físico de emg_p/emg_n en un MOS varactor real:</strong> En un transistor NMOS usado como varactor:</p>
+        <ul style="list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem;">
+            <li style="margin-bottom:0.4rem;">El <em>gate</em> es un terminal RF (conectado a D1 o D2).</li>
+            <li style="margin-bottom:0.4rem;">El <em>bulk/source/drain</em> (cortocircuitados) van al nodo de polarización (emg_p o emg_n).</li>
+            <li style="margin-bottom:0.4rem;">La capacitancia $C_{GS}(V_{GS})$ depende de $V_{gate} - V_{source}$. El punto de operación (y la sensibilidad $dC/dV$) es controlado por el voltaje de bias del source, que es donde llega la señal EMG.</li>
+        </ul>
+
+        <h3>Sensibilidad de frecuencia a la señal EMG</h3>
+
+        <div class="math-block">
+            $$f_0(V_{EMG}) = \frac{1}{2\pi\sqrt{\frac{L}{2} \cdot C_0(1+\alpha V_{EMG})}} = \frac{f_{00}}{\sqrt{1+\alpha V_{EMG}}}$$
+        </div>
+
+        <p>Para $\alpha V_{EMG} \ll 1$ (señal pequeña), expandiendo en serie de Taylor:</p>
+
+        <div class="math-block">
+            $$f_0(V_{EMG}) \approx f_{00}\left(1 - \frac{\alpha V_{EMG}}{2}\right) \qquad \Rightarrow \qquad \frac{\Delta f_0}{\Delta V_{EMG}} = -\frac{\alpha f_{00}}{2}$$
+        </div>
+
+        <p>Con $\alpha = 0.5\,\text{V}^{-1}$ y $f_{00} = 200\,\text{MHz}$:</p>
+        <div class="math-block">
+            $$\frac{\Delta f_0}{\Delta V_{EMG}} = -\frac{0.5 \times 200\,\text{MHz}}{2} = -50\,\text{MHz/V} = -250\,\text{kHz per 5 mV EMG}$$
+        </div>
+
+        <p>Para una señal EMG de 5 mV de amplitud, el resonador se desvía ±250 kHz de su frecuencia central — suficiente para ser detectado por el sistema de lectura externo sin interferir con canales adyacentes separados por ≥500 kHz en el plan FDM.</p>
+
+        <table class="param-table">
+            <tr><th>Parámetro</th><th>Valor</th><th>Significado</th></tr>
+            <tr><td><code>C0</code></td><td>32 fF</td><td>Capacitancia nominal sin señal EMG</td></tr>
+            <tr><td><code>alpha</code></td><td>0.5 V⁻¹</td><td>Índice de modulación del varactor: $\alpha = (1/C_0)\cdot dC/dV$</td></tr>
+            <tr><td><code>EMGamp</code></td><td>5 mV</td><td>Amplitud de la señal EMG simulada</td></tr>
+            <tr><td><code>EMGfreq</code></td><td>100 Hz</td><td>Frecuencia de la señal EMG (rango muscular típico)</td></tr>
+        </table>
+
+        <h3>Referencias</h3>
+        <p>Dülger, F., et al. (2004). "A 1.3-V 5-mW Fully Integrated Tunable Bandpass Filter at 2.7 GHz in 0.35-μm CMOS," <em>IEEE JSSC</em> 39(3):558–564. — Razavi, B. (2001). <em>Design of Analog CMOS Integrated Circuits</em>, Sec. 17.3 (MOS Varactors).</p>
+    </div>
+
+    <!-- EN -->
+    <div class="lang-en">
+        <h2>Varactors Cv1 and Cv2: Voltage-Controlled Capacitors</h2>
+
+        <h3>What is a varactor?</h3>
+        <p>A <strong>varactor</strong> (variable reactor) is a device whose electrical capacitance changes with applied voltage. In physical implementations, an NMOS transistor in accumulation mode is typically used (MOS varactor), whose gate-body capacitance $C_{GB}$ depends on $V_{GB}$. In the LTspice model, a <strong>behavioral capacitor</strong> captures the same behavior in idealized form.</p>
+
+        <h3>Why are varactors inside the LC tank?</h3>
+        <p>The tank resonant frequency is $f_0 = 1/(2\pi\sqrt{LC})$. If $C$ changes with the EMG signal (the muscle signal we want to detect), then $f_0$ changes with EMG. An external receiver sweeping frequencies can then read the muscle signal as a frequency shift — no wires, no direct amplifiers, just implanted FM encoding.</p>
+
+        <h3>Physical connection: why D1→emg_p and D2→emg_n?</h3>
+
+        <div class="ascii-diagram">
+     D1 ──────[Cv1]────── emg_p
+     (RF node)   ↑        (control node)
+                 │
+       Capacitance = C₀·(1 + α·V(emg_p, emg_n))
+                 │
+     D2 ──────[Cv2]────── emg_n
+     (RF node)            (control node)
+        </div>
+
+        <p>The varactors have <strong>two RF terminals</strong> (D1/D2 and emg_p/emg_n) that form part of the resonance tank. RF current flows between these terminals. However, the <strong>capacitance</strong> does not depend on the RF voltage across those terminals — it depends on a different voltage: $V(\text{emg\_p}, \text{emg\_n})$, which is the EMG signal.</p>
+
+        <div class="insight-box">
+            <strong>The behavioral equation in LTspice:</strong><br>
+            <code>Q = C₀ · (1 + α · V(emg_p, emg_n)) · x</code><br><br>
+            Where <em>x</em> is the voltage across the capacitor terminals (RF voltage: $V(D1, \text{emg\_p})$ for Cv1). The stored charge is $Q = C_{eff} \cdot V_{RF}$, with $C_{eff} = C_0 \cdot (1 + \alpha \cdot V_{EMG})$.
+        </div>
+
+        <h3>Why separate control voltage from RF terminals?</h3>
+
+        <p><strong>Reason 1 — Linearity and time-scale separation:</strong> The EMG signal is low-frequency (0–500 Hz). The RF tank oscillates at hundreds of MHz or GHz. If the capacitance depended on the instantaneous RF voltage (voltage of its own terminals), the RF carrier — which can have tens or hundreds of mV amplitude — would modulate $C$ every RF cycle, causing harmonic distortion, phase noise, and intermodulation products between the 1000+ FDM channels.</p>
+
+        <p>By using a <em>separate</em> control voltage ($V_{\text{EMG}}$ at 100 Hz), the capacitance varies <em>slowly</em> compared to the RF period. During each RF cycle, the varactor behaves as a fixed capacitor of value $C_0(1+\alpha V_{\text{EMG}}(t))$, where $V_{\text{EMG}}(t)$ barely changes in one RF cycle. This is called <strong>adiabatic parametric modulation</strong>.</p>
+
+        <p><strong>Reason 2 — Physical role of emg_p/emg_n in a real MOS varactor:</strong> In an NMOS varactor, the gate is one RF terminal (connected to D1 or D2) and the bulk/source/drain (shorted together) go to the bias node (emg_p or emg_n). The capacitance $C_{GS}(V_{GS})$ depends on $V_{gate} - V_{source}$. The operating point and sensitivity $dC/dV$ are set by the source bias voltage, where the EMG signal arrives.</p>
+
+        <h3>Frequency sensitivity to EMG signal</h3>
+
+        <div class="math-block">
+            $$\frac{\Delta f_0}{\Delta V_{EMG}} = -\frac{\alpha \, f_{00}}{2}$$
+        </div>
+
+        <p>With $\alpha = 0.5\,\text{V}^{-1}$ and $f_{00} = 200\,\text{MHz}$: the resonator shifts ±250 kHz for a 5 mV EMG signal — enough to be detected without interfering with adjacent FDM channels separated by ≥500 kHz.</p>
+
+        <table class="param-table">
+            <tr><th>Parameter</th><th>Value</th><th>Meaning</th></tr>
+            <tr><td><code>C0</code></td><td>32 fF</td><td>Nominal capacitance with no EMG signal</td></tr>
+            <tr><td><code>alpha</code></td><td>0.5 V⁻¹</td><td>Varactor modulation index: $\alpha = (1/C_0)\cdot dC/dV$</td></tr>
+            <tr><td><code>EMGamp</code></td><td>5 mV</td><td>Simulated EMG signal amplitude</td></tr>
+            <tr><td><code>EMGfreq</code></td><td>100 Hz</td><td>EMG frequency (typical muscular range)</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- ================================================================
+     TAB 3: PAR CRUZADO M1/M2 + Itail
+     ================================================================ -->
+<div id="tab-nmos" class="tab-content academic-text">
+
+    <!-- ES -->
+    <div class="lang-es">
+        <h2>Par Cruzado M1/M2: Generación de Resistencia Negativa</h2>
+
+        <h3>El problema: pérdidas en el tanque LC</h3>
+        <p>Cualquier inductor real tiene resistencia en serie $R_S$ que disipa energía. Esta resistencia puede modelarse como una resistencia paralela $R_p = (\omega_0 L)^2 / R_S$ que amortiza la oscilación del tanque. El factor Q intrínseco es $Q_0 = R_p/(\omega_0 L) \approx 84$ para los parámetros dados — inadecuado para detectar señales EMG de 5 mV en un entorno ruidoso con 1000+ canales.</p>
+
+        <h3>La solución: resistencia negativa activa</h3>
+        <p>Si se conecta una <strong>resistencia negativa</strong> $R_{neg} = -R_p$ en paralelo con el tanque, las pérdidas se cancelan exactamente y el sistema permanece en el borde de la oscilación (Q → ∞). En la práctica se opera a $|R_{neg}| > R_p$ para mantener estabilidad.</p>
+
+        <h3>El cruce de compuertas: ¿por qué M1.gate = D2 y M2.gate = D1?</h3>
+
+        <div class="ascii-diagram">
+    D1 ─────────────────────────────────── D2
+     │                                     │
+  M1.drain                            M2.drain
+     │                                     │
+  M1.gate ←────────────────── D2     D1 ──→ M2.gate
+     │         (cruce cruzado)              │
+  M1.source ──────── ST ──────────── M2.source
+                      │
+                  Itail (130 µA)
+                      │
+                     GND
+        </div>
+
+        <p>Cuando D1 sube, la compuerta de M2 (=D1) aumenta $V_{GS,M2}$ → M2 conduce más → D2 baja. D2 bajo hace que la compuerta de M1 (=D2) disminuya → M1 conduce menos → D1 sube más. Este proceso de <strong>retroalimentación positiva cruzada</strong> es lo que genera la resistencia negativa: en lugar de disipar energía, el par devuelve energía al tanque.</p>
+
+        <h3>Cálculo de la resistencia negativa</h3>
+
+        <p>Aplicando análisis de señal pequeña al par cruzado (modelo de dos puertos), la admitancia vista entre D1 y D2 es:</p>
+        <div class="math-block">
+            $$Y_{neg} = -\frac{g_m}{2} \quad \Rightarrow \quad R_{neg} = -\frac{2}{g_m}$$
+        </div>
+
+        <p>donde $g_m$ es la transconductancia de cada MOSFET. Para el modelo NMOS de Nivel 1 en SPICE:</p>
+        <div class="math-block">
+            $$g_m = \sqrt{2 \cdot K_p \cdot I_D} = \sqrt{K_p \cdot I_{tail}}$$
+        </div>
+        <p>con $I_D = I_{tail}/2$ (la corriente total de la fuente de cola se divide entre los dos NMOS).</p>
+
+        <h3>¿Por qué Itail = 130 µA? — El punto de operación de Q-mejora</h3>
+
+        <p>La condición de Q-mejora requiere que $|R_{neg}|$ sea <em>menor</em> que $R_p$ (pero cercano) para máximo Q sin oscilación. El factor Q mejorado es:</p>
+        <div class="math-block">
+            $$Q_{enh} = \frac{Q_0}{1 - g_m R_p}$$
+        </div>
+
+        <p>El factor $g_m R_p$ debe ser $< 1$ para estabilidad. Llamando $\epsilon = 1 - g_m R_p$ (margen de estabilidad):</p>
+        <div class="math-block">
+            $$Q_{enh} = \frac{Q_0}{\epsilon} \qquad \Rightarrow \qquad \epsilon \to 0 \Rightarrow Q_{enh} \to \infty$$
+        </div>
+
+        <p>El step de simulación <code>.step param Itail list 0u 50u 100u 130u 160u</code> barre el punto de operación para visualizar esta progresión:</p>
+
+        <table class="param-table">
+            <tr><th>Itail (µA)</th><th>$g_m$ (mS)</th><th>$g_m R_p$</th><th>$\epsilon$</th><th>$Q_{enh}$ aprox.</th><th>Estado</th></tr>
+            <tr><td>0</td><td>0</td><td>0</td><td>1.0</td><td>84</td><td>Tanque pasivo</td></tr>
+            <tr><td>50</td><td>0.1</td><td>0.42</td><td>0.58</td><td>145</td><td>Q moderado</td></tr>
+            <tr><td>100</td><td>0.14</td><td>0.59</td><td>0.41</td><td>205</td><td>Q alto</td></tr>
+            <tr><td>130</td><td>0.16</td><td>0.67</td><td>0.33</td><td>255</td><td>Punto de diseño</td></tr>
+            <tr><td>160</td><td>0.18</td><td>0.76</td><td>0.24</td><td>350</td><td>Q muy alto</td></tr>
+        </table>
+
+        <div class="warning-box">
+            <strong>Nota:</strong> Los valores numéricos de la tabla usan $K_p=200\,\mu\text{A/V}^2$ y $R_p=4.2\,\text{k}\Omega$ a 200 MHz. El plan original afirma $g_m R_p \approx 0.998$ a $I_{tail}=130\,\mu\text{A}$, lo que requeriría $g_m \approx 0.5\,\text{mS}$ y asumiría una $W/L$ mayor en el MOSFET o un $R_p$ diferente. La simulación en LTspice con los parámetros dados mostrará los valores exactos.
+        </div>
+
+        <h3>La fuente de corriente de cola (Itail)</h3>
+        <p>La fuente de corriente <span class="component-badge">Itail_src</span> fuerza una corriente constante $I_{tail}$ desde el nodo <span class="node-tag">ST</span> a GND. Su función dual es:</p>
+        <ul style="list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem;">
+            <li style="margin-bottom:0.4rem;"><strong>Fija el punto de operación de M1/M2:</strong> Al forzar $I_D = I_{tail}/2$ en cada transistor, define $g_m = \sqrt{K_p \cdot I_{tail}}$ independientemente del voltaje VDD.</li>
+            <li style="margin-bottom:0.4rem;"><strong>Alta impedancia de modo común:</strong> Una fuente de corriente ideal tiene impedancia infinita, por lo que el nodo ST rechaza señales de modo común. Solo las señales diferenciales (D1 anti-fase con D2) son amplificadas.</li>
+            <li style="margin-bottom:0.4rem;"><strong>Rechaza ruido de alimentación:</strong> Variaciones en VDD no cambian $I_{tail}$ (en un diseño real con espejo de corriente), manteniendo $g_m$ y $Q_{enh}$ estables.</li>
+        </ul>
+
+        <h3>Referencias</h3>
+        <p>Razavi, B. (2001). <em>RF Microelectronics</em>, cap. 8. — Craninckx, J. & Steyaert, M. (1997). "A 1.8-GHz Low-Phase-Noise CMOS VCO," <em>IEEE JSSC</em> 32(5):736–744.</p>
+    </div>
+
+    <!-- EN -->
+    <div class="lang-en">
+        <h2>Cross-Coupled Pair M1/M2: Negative Resistance Generation</h2>
+
+        <h3>The problem: losses in the LC tank</h3>
+        <p>Any real inductor has series resistance $R_S$ that dissipates energy. This is modeled as a parallel resistance $R_p = (\omega_0 L)^2 / R_S$ that damps the tank oscillation. The intrinsic Q is $Q_0 \approx 84$ — insufficient to detect 5 mV EMG signals in a noisy environment with 1000+ FDM channels.</p>
+
+        <h3>The solution: active negative resistance</h3>
+        <p>Connecting a <strong>negative resistance</strong> $R_{neg} = -R_p$ in parallel with the tank exactly cancels the losses, keeping the system at the edge of oscillation (Q → ∞). In practice, $|R_{neg}| > R_p$ is maintained for stability.</p>
+
+        <h3>Why M1.gate = D2 and M2.gate = D1?</h3>
+        <p>When D1 rises, M2's gate (=D1) increases $V_{GS,M2}$ → M2 conducts more → D2 falls. Low D2 decreases M1's gate (=D2) → M1 conducts less → D1 rises further. This <strong>cross positive feedback</strong> returns energy to the tank instead of dissipating it, generating negative resistance.</p>
+
+        <div class="math-block">
+            $$R_{neg} = -\frac{2}{g_m} \qquad g_m = \sqrt{2 \cdot K_p \cdot I_D} = \sqrt{K_p \cdot I_{tail}}$$
+        </div>
+
+        <h3>Q-enhancement equation</h3>
+
+        <div class="math-block">
+            $$Q_{enh} = \frac{Q_0}{1 - g_m R_p} = \frac{Q_0}{\epsilon} \qquad \epsilon = 1 - g_m R_p \quad (\text{stability margin, must be} > 0)$$
+        </div>
+
+        <p>The <code>.step param Itail list 0u 50u 100u 130u 160u</code> directive sweeps the operating point to visualize this progression from passive tank ($g_m=0$) through near-oscillation ($g_m R_p \to 1$) to onset of oscillation.</p>
+
+        <h3>Role of the tail current source</h3>
+        <ul style="list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem;">
+            <li style="margin-bottom:0.4rem;"><strong>Sets M1/M2 operating point:</strong> Forces $I_D = I_{tail}/2$, defining $g_m$ regardless of VDD.</li>
+            <li style="margin-bottom:0.4rem;"><strong>Common-mode rejection:</strong> Infinite impedance ideal current source rejects common-mode signals at node ST.</li>
+            <li style="margin-bottom:0.4rem;"><strong>Supply noise rejection:</strong> VDD variations don't change $I_{tail}$, keeping $g_m$ and $Q_{enh}$ stable.</li>
+        </ul>
+
+        <h3>References</h3>
+        <p>Razavi, B. (2001). <em>RF Microelectronics</em>, ch. 8. — Craninckx, J. & Steyaert, M. (1997). "A 1.8-GHz Low-Phase-Noise CMOS VCO," <em>IEEE JSSC</em> 32(5):736–744.</p>
+    </div>
+</div>
+
+<!-- ================================================================
+     TAB 4: RED DE POLARIZACIÓN Rb / VBIAS
+     ================================================================ -->
+<div id="tab-bias" class="tab-content academic-text">
+
+    <!-- ES -->
+    <div class="lang-es">
+        <h2>Red de Polarización: Rb, VBIAS y V_EMG</h2>
+
+        <div class="ascii-diagram">
+     D1 ──[Cv1]──● emg_p ──[Rb1=100kΩ]──┐
+                                          ├── vbias ──[VBIAS_V=0.6V]── GND
+     D2 ──[Cv2]──● emg_n ──[Rb2=100kΩ]──┘
+                 │            │
+            V_EMG(+)     V_EMG(-)
+         SINE(0, 5mV, 100Hz)
+        </div>
+
+        <h3>Función de Rb1 y Rb2: aislamiento RF</h3>
+
+        <p>Las resistencias <span class="component-badge">Rb1</span> y <span class="component-badge">Rb2</span> tienen un valor de <code>Rb = 100 kΩ</code>. Su función es aislar el nodo de control de los varactores (emg_p, emg_n) del voltaje de bias DC, <em>sin cargar el tanque RF</em>.</p>
+
+        <p>El argumento cuantitativo: la impedancia del varactor a la frecuencia de resonancia es:</p>
+        <div class="math-block">
+            $$|Z_{Cv}| = \frac{1}{\omega_0 C_0} = \frac{1}{2\pi \times 200\,\text{MHz} \times 32\,\text{fF}} \approx 25\,\text{k}\Omega$$
+        </div>
+
+        <p>Para que Rb no cargue el tanque RF, se requiere $R_b \gg |Z_{Cv}|$. Con $R_b = 100\,\text{k}\Omega$ y $|Z_{Cv}| \approx 25\,\text{k}\Omega$, la corriente RF que fluye por Rb es menor al 20% de la corriente total — un compromiso aceptable. En un diseño optimizado, $R_b$ sería aún mayor (1–10 MΩ), posiblemente implementado como una resistencia polisílicio de alta resistividad o un transistor en subumbral.</p>
+
+        <div class="insight-box">
+            <strong>Regla de diseño:</strong> $R_b \geq 10 \times |Z_{varactor}|$ para pérdida de inserción &lt;1 dB. A 200 MHz con $C_0=32$ fF: $R_b \geq 250\,\text{k}\Omega$ ideal; 100 kΩ es una aproximación para el modelo de simulación.
+        </div>
+
+        <h3>Función de VBIAS_V = 0.6 V</h3>
+
+        <p>El voltaje de bias de los varactores es <code>VBIAS_V = 0.6 V</code>, que corresponde a la mitad del rail de alimentación $V_{DD}/2 = 0.6\,\text{V}$. Esta elección no es arbitraria:</p>
+
+        <ul style="list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem;">
+            <li style="margin-bottom:0.5rem;"><strong>Región lineal del varactor:</strong> En un NMOS en modo de acumulación, la curva $C_{GB}(V_{GB})$ tiene su zona más lineal (máxima $dC/dV$) alrededor de la tensión de umbral $V_t \approx 0.3\,\text{V}$. El punto de operación $V_{GS} = V_{bias} - V_{D1,2}$ debe estar en esta región para maximizar $\alpha = (1/C_0) \cdot dC/dV$.</li>
+            <li style="margin-bottom:0.5rem;"><strong>Simetría del swing RF:</strong> Con el drenaje a $\sim V_{DD}$ (el tanque oscila alrededor de VDD = 1.2 V) y la fuente del varactor a $\sim V_{bias} = 0.6\,\text{V}$, el $V_{GS} \approx 0.6\,\text{V}$ en el punto de operación — por encima de $V_t = 0.3\,\text{V}$, manteniendo el transistor en acumulación.</li>
+            <li style="margin-bottom:0.5rem;"><strong>Margen para la señal EMG:</strong> La señal EMG de ±5 mV se superpone a los 0.6 V. El punto de operación varía entre 0.595 V y 0.605 V — una fracción pequeña del rango total de polarización, garantizando operación lineal.</li>
+        </ul>
+
+        <h3>Función de V_EMG: la señal que se quiere detectar</h3>
+
+        <p>La fuente de voltaje <span class="component-badge">V_EMG</span> modela la señal electromiográfica del músculo implantado. En el modelo de simulación es una sinusoide de 5 mV a 100 Hz: <code>SINE(0 {EMGamp} {EMGfreq})</code>.</p>
+
+        <p>Esta fuente se conecta entre emg_p (+) y emg_n (−), generando un voltaje diferencial que modula ambos varactores simultáneamente. El voltaje diferencial $V(\text{emg\_p}, \text{emg\_n}) = V_{EMG}(t)$ es el argumento del término $\alpha \cdot V$ en la expresión de capacitancia.</p>
+
+        <p>En una implementación real, V_EMG sería el potencial de acción muscular (EMG) captado directamente por el electrodo implantado, con amplitudes típicas de 0.1–5 mV y contenido frecuencial de 20–500 Hz.</p>
+
+        <table class="param-table">
+            <tr><th>Componente</th><th>Valor</th><th>Función principal</th><th>Restricción de diseño</th></tr>
+            <tr><td>Rb1, Rb2</td><td>100 kΩ</td><td>Aislamiento RF del nodo de control</td><td>$R_b \gg 1/(\omega_0 C_0)$</td></tr>
+            <tr><td>VBIAS_V</td><td>0.6 V</td><td>Punto de operación del varactor</td><td>Región lineal de $C(V)$ del MOS varactor</td></tr>
+            <tr><td>V_EMG</td><td>5 mV, 100 Hz</td><td>Señal de modulación (EMG simulado)</td><td>$|V_{EMG}| \ll 1/\alpha$ para linealidad</td></tr>
+        </table>
+
+        <h3>Referencias</h3>
+        <p>Razavi, B. (2001). <em>Design of Analog CMOS Integrated Circuits</em>, Sec. 17.3. — Clites, T. & Cuervo, J. (2024). "Resonant Electrophysiology Proposal," UCI/UCLA Bioelectronics.</p>
+    </div>
+
+    <!-- EN -->
+    <div class="lang-en">
+        <h2>Bias Network: Rb, VBIAS, and V_EMG</h2>
+
+        <h3>Role of Rb1 and Rb2: RF isolation</h3>
+        <p>Resistors <span class="component-badge">Rb1</span> and <span class="component-badge">Rb2</span> (100 kΩ each) isolate the varactor control nodes (emg_p, emg_n) from the DC bias without loading the RF tank. The argument: the varactor impedance at resonance is $|Z_{Cv}| = 1/(\omega_0 C_0) \approx 25\,\text{k}\Omega$ at 200 MHz. With $R_b = 100\,\text{k}\Omega$, less than 20% of RF current leaks through Rb — acceptable for a simulation model.</p>
+
+        <div class="insight-box">
+            <strong>Design rule:</strong> $R_b \geq 10 \times |Z_{varactor}|$ for &lt;1 dB insertion loss. Ideally ≥250 kΩ at 200 MHz with $C_0=32$ fF; 100 kΩ is a simulation model approximation.
+        </div>
+
+        <h3>Role of VBIAS_V = 0.6 V</h3>
+        <p>The 0.6 V bias (= $V_{DD}/2$) positions the varactor at its most linear $C(V)$ operating point. The gate-source voltage $V_{GS} \approx 0.6\,\text{V}$ (with drain near VDD = 1.2 V) keeps the NMOS varactor in accumulation mode, above threshold $V_t = 0.3\,\text{V}$, maximizing $\alpha = (1/C_0)\,dC/dV$. The ±5 mV EMG sits atop the 0.6 V bias as a tiny perturbation, ensuring linear parametric modulation.</p>
+
+        <h3>Role of V_EMG</h3>
+        <p>The <span class="component-badge">V_EMG</span> source models the muscle electromyographic signal. It drives a differential voltage between emg_p and emg_n that modulates both varactors simultaneously, shifting the resonant frequency. In a real implant, this would be the muscle action potential (0.1–5 mV, 20–500 Hz) captured directly by the implanted electrode.</p>
+
+        <table class="param-table">
+            <tr><th>Component</th><th>Value</th><th>Primary function</th><th>Design constraint</th></tr>
+            <tr><td>Rb1, Rb2</td><td>100 kΩ</td><td>RF isolation of control node</td><td>$R_b \gg 1/(\omega_0 C_0)$</td></tr>
+            <tr><td>VBIAS_V</td><td>0.6 V</td><td>Varactor operating point</td><td>Linear $C(V)$ region of MOS varactor</td></tr>
+            <tr><td>V_EMG</td><td>5 mV, 100 Hz</td><td>EMG modulation signal</td><td>$|V_{EMG}| \ll 1/\alpha$ for linearity</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- ================================================================
+     TAB 5: ACOPLAMIENTO TL: Cc / R_TL
+     ================================================================ -->
+<div id="tab-tl" class="tab-content academic-text">
+
+    <!-- ES -->
+    <div class="lang-es">
+        <h2>Acoplamiento a Línea de Transmisión: Cc y R_TL</h2>
+
+        <div class="ascii-diagram">
+        D1 ──[Cc1=5fF]──● TLp_int ──[R_TLp=25Ω]──● TLp ──[V_TLp: AC 1∠0°]── GND
+        D2 ──[Cc2=5fF]──● TLn_int ──[R_TLn=25Ω]──● TLn ──[V_TLn: AC 1∠180°]─ GND
+        </div>
+
+        <h3>¿Qué representa este bloque?</h3>
+
+        <p>En un sistema real de 1000+ canales FDM, el resonador implantado está acoplado a una <strong>línea de transmisión de 50 Ω</strong> que lleva la señal a/desde el lector externo. El bloque Cc + R_TL modela este acoplamiento en LTspice de manera que la simulación AC pueda calcular la impedancia de entrada del tanque tal como la vería la línea.</p>
+
+        <p>La combinación de dos fuentes de voltaje AC ($V_{TLp}$ a 0° y $V_{TLn}$ a 180°) con dos resistencias de 25 Ω representa una <strong>excitación diferencial de 50 Ω</strong>:</p>
+        <ul style="list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem;">
+            <li style="margin-bottom:0.4rem;">Cada rama tiene 25 Ω (impedancia de medio circuito diferencial).</li>
+            <li style="margin-bottom:0.4rem;">Vista desde los terminales diferenciales TLp–TLn: $Z_{TL} = 25 + 25 = 50\,\Omega$ diferencial.</li>
+            <li style="margin-bottom:0.4rem;">La excitación en anti-fase garantiza que la simulación AC excita solo el modo diferencial del tanque.</li>
+        </ul>
+
+        <h3>Capacitores de acoplamiento Cc1 y Cc2 (5 fF)</h3>
+
+        <p>Los capacitores <span class="component-badge">Cc1</span> y <span class="component-badge">Cc2</span> cumplen tres funciones:</p>
+
+        <p><strong>1. Bloqueo DC:</strong> Evitan que el bias DC del tanque (≈VDD = 1.2 V en D1/D2) llegue a los puertos de la línea de transmisión. Sin Cc, las fuentes $V_{TLp}$ y $V_{TLn}$ fijarían el voltaje DC de D1 y D2 a 0 V, arruinando la polarización de los NMOS.</p>
+
+        <p><strong>2. Acoplamiento débil al tanque:</strong> A la frecuencia de resonancia, la impedancia de Cc es:</p>
+        <div class="math-block">
+            $$|Z_{Cc}| = \frac{1}{\omega_0 C_c} = \frac{1}{2\pi \times 200\,\text{MHz} \times 5\,\text{fF}} \approx 159\,\text{k}\Omega$$
+        </div>
+        <p>Esta impedancia es <em>enorme</em> comparada con $R_{TL} = 25\,\Omega$, lo que significa que la carga de la línea de transmisión al tanque es mínima — el factor de carga es:</p>
+        <div class="math-block">
+            $$Q_{load}^{-1} = \frac{R_{TL}}{|Z_{Cc}|^2 / R_p} \approx \frac{R_{TL} \cdot (\omega_0 C_c)^2}{R_p}$$
+        </div>
+        <p>El tanque fuertemente resonante (Q >> 1) apenas es perturbado por la carga de la línea.</p>
+
+        <p><strong>3. Filtro paso-alto:</strong> Señales por debajo de $f_{3dB} = 1/(2\pi R_{TL} C_c) = 1/(2\pi \times 25 \times 5\text{f}) \approx 1.3\,\text{THz}$ pasan libremente; señales DC quedan bloqueadas. Para señales RF, la atenuación de Cc es prácticamente nula.</p>
+
+        <h3>Resistencias R_TLp y R_TLn (25 Ω)</h3>
+
+        <p>Estas resistencias modelan la <strong>impedancia característica de la línea de transmisión</strong> vista desde el resonador. En un sistema de medición de microondas estándar, la impedancia de la fuente es $Z_S = 50\,\Omega$ (single-ended). Para excitación diferencial:</p>
+
+        <div class="math-block">
+            $$Z_{diff} = 2 \times Z_{single} = 2 \times 25\,\Omega = 50\,\Omega
+            \qquad \text{(split entre las dos ramas)}$$
+        </div>
+
+        <p>Las fuentes $V_{TLp}$ y $V_{TLn}$ con AC = 1 V a ±180° representan un generador diferencial de 2 V pico que, visto desde los nodos D1/D2 a través de Cc, actúa como un analizador de redes vectoriales (VNA) virtual.</p>
+
+        <div class="insight-box">
+            <strong>¿Cómo leer el resultado de la simulación?</strong><br>
+            En LTspice, grafica <code>V(D1,D2)/I(V_TLp)</code> — esto es la impedancia de transferencia del tanque vista desde la línea. El pico de impedancia ocurre en $f_0$; el ancho de banda a -3 dB da $Q_{enh} = f_0 / BW_{3dB}$.
+        </div>
+
+        <h3>¿Por qué V_TLp tiene fase 0° y V_TLn tiene fase 180°?</h3>
+
+        <p>Para excitar un circuito diferencial, se necesitan dos fuentes en anti-fase. Si ambas tuvieran la misma fase (modo común), solo excitarían el modo común del tanque — y la señal sería cero en la salida diferencial. La excitación diferencial garantiza que toda la potencia inyectada va al modo que queremos medir.</p>
+
+        <p>Esto es equivalente a una sonda de puntas diferencial en un instrumento de medición real, o a los puertos de un balun en un sistema RF.</p>
+
+        <table class="param-table">
+            <tr><th>Componente</th><th>Valor</th><th>Función</th><th>Criterio</th></tr>
+            <tr><td>Cc1, Cc2</td><td>5 fF</td><td>Bloqueo DC + acoplamiento débil</td><td>$|Z_{Cc}| \gg R_{TL}$ en $f_0$</td></tr>
+            <tr><td>R_TLp, R_TLn</td><td>25 Ω</td><td>Modelo de Z₀ = 50 Ω de la TL</td><td>$Z_0 = 2 \times R_{TL} = 50\,\Omega$</td></tr>
+            <tr><td>V_TLp</td><td>AC 1∠0°</td><td>Excitación diferencial (+)</td><td>Anti-fase con V_TLn</td></tr>
+            <tr><td>V_TLn</td><td>AC 1∠180°</td><td>Excitación diferencial (−)</td><td>Anti-fase con V_TLp</td></tr>
+        </table>
+
+        <h3>Referencias</h3>
+        <p>Pozar, D.M. (2011). <em>Microwave Engineering</em>, 4th ed., ch. 4 (Impedance Matching). — Razavi, B. (2001). <em>RF Microelectronics</em>, Sec. 2.3 (Differential LNA/TL interface).</p>
+    </div>
+
+    <!-- EN -->
+    <div class="lang-en">
+        <h2>Transmission Line Coupling: Cc and R_TL</h2>
+
+        <h3>What does this block represent?</h3>
+        <p>In a real 1000+ channel FDM system, the implanted resonator couples to a <strong>50 Ω transmission line</strong> that carries signals to/from the external reader. The Cc + R_TL block models this coupling in LTspice so the AC simulation can compute the tank's input impedance as the line would see it. Two AC sources ($V_{TLp}$ at 0°, $V_{TLn}$ at 180°) with two 25 Ω resistors represent a <strong>50 Ω differential excitation</strong> (25+25 = 50 Ω differential).</p>
+
+        <h3>Coupling capacitors Cc1 and Cc2 (5 fF)</h3>
+
+        <p><strong>1. DC blocking:</strong> Prevents tank DC bias (≈VDD) from reaching transmission line ports. Without Cc, $V_{TLp}$ and $V_{TLn}$ would force D1 and D2 to 0 V, ruining NMOS biasing.</p>
+
+        <p><strong>2. Weak tank coupling:</strong> At resonance, $|Z_{Cc}| = 1/(\omega_0 C_c) \approx 159\,\text{k}\Omega \gg 25\,\Omega$, so the TL barely loads the tank. The loaded Q is only minimally degraded from $Q_{enh}$.</p>
+
+        <p><strong>3. High-pass filtering:</strong> DC is blocked; RF passes with negligible attenuation.</p>
+
+        <h3>Resistors R_TLp and R_TLn (25 Ω)</h3>
+        <p>These model the <strong>characteristic impedance of the transmission line</strong> as seen from the resonator. Standard microwave measurement uses $Z_S = 50\,\Omega$ single-ended; for differential excitation each branch carries half: $2 \times 25\,\Omega = 50\,\Omega$ differential. The anti-phase AC sources act as a virtual vector network analyzer (VNA), enabling direct reading of tank impedance from the simulation.</p>
+
+        <div class="insight-box">
+            <strong>How to read simulation results:</strong><br>
+            Plot <code>V(D1,D2)/I(V_TLp)</code> in LTspice — this is the tank transfer impedance seen from the TL. The impedance peak occurs at $f_0$; the −3 dB bandwidth gives $Q_{enh} = f_0 / BW_{3dB}$.
+        </div>
+
+        <table class="param-table">
+            <tr><th>Component</th><th>Value</th><th>Function</th><th>Criterion</th></tr>
+            <tr><td>Cc1, Cc2</td><td>5 fF</td><td>DC block + weak coupling</td><td>$|Z_{Cc}| \gg R_{TL}$ at $f_0$</td></tr>
+            <tr><td>R_TLp, R_TLn</td><td>25 Ω</td><td>50 Ω TL impedance model</td><td>$Z_0 = 2 \times R_{TL} = 50\,\Omega$</td></tr>
+            <tr><td>V_TLp</td><td>AC 1∠0°</td><td>Differential excitation (+)</td><td>Anti-phase with V_TLn</td></tr>
+            <tr><td>V_TLn</td><td>AC 1∠180°</td><td>Differential excitation (−)</td><td>Anti-phase with V_TLp</td></tr>
+        </table>
+
+        <h3>References</h3>
+        <p>Pozar, D.M. (2011). <em>Microwave Engineering</em>, 4th ed., ch. 4. — Razavi, B. (2001). <em>RF Microelectronics</em>, Sec. 2.3.</p>
+    </div>
+</div>
+
+</main>
+
+<footer class="bg-slate-900 text-slate-500 py-6 text-center text-sm border-t border-slate-800 mt-8">
+    <p class="lang-es">Guía de componentes para CROSS COUPLED.asc — Topología A.1, Resonant Electrophysiology UCLA/UCI.</p>
+    <p class="lang-en">Component guide for CROSS COUPLED.asc — Topology A.1, Resonant Electrophysiology UCLA/UCI.</p>
+    <p class="mt-2">(c) 2026 UCLA / UCI Bioelectronics Collaboration</p>
+</footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ]
+        });
+    });
+
+    let currentLang = 'es';
+    function toggleLanguage() {
+        const body = document.body;
+        if (currentLang === 'es') {
+            body.classList.remove('lang-es');
+            body.classList.add('lang-en');
+            currentLang = 'en';
+        } else {
+            body.classList.remove('lang-en');
+            body.classList.add('lang-es');
+            currentLang = 'es';
+        }
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => {
+            el.classList.remove('bg-blue-600', 'text-white');
+            el.classList.add('text-slate-300');
+        });
+        document.getElementById(tabId).classList.add('active');
+        const activeBtn = document.getElementById('btn-' + tabId);
+        activeBtn.classList.remove('text-slate-300');
+        activeBtn.classList.add('bg-blue-600', 'text-white');
+    }
+</script>
+</body>
+</html>

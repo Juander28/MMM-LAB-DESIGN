@@ -1,0 +1,480 @@
+<!-- Chosen Palette: Slate gray, clean white, and deep ocean blue to reflect a sterile, academic, and highly technical biomedical engineering environment. -->
+<!-- Application Structure Plan: A multi-page Single Page Application (SPA) utilizing tabbed navigation to separate the extensive technical content into logical "sub-pages". 
+     - "Resumen del Proyecto" / "Project Overview"
+     - "Interfaz del Transductor" / "Transducer Interface"
+     - "Mejora Activa de Q" / "Active Q-Enhancement"
+     - "Procesamiento de Señal" / "Signal Processing"
+     A global language toggle (EN/ES) switches CSS classes to display the corresponding language seamlessly. KaTeX is integrated for rendering all the complex mathematical formulas directly from the source material. -->
+<!-- Visualization & Content Choices:
+     - Goal: Present full academic text without summarizing. -> Method: Long-form text with clear headings, styled as a scientific paper.
+     - Goal: Display complex formulas. -> Method: KaTeX auto-render.
+     - Goal: Sub-pages. -> Method: JavaScript-controlled section visibility (tabs).
+     - Goal: Bilingual. -> Method: Elements marked with 'lang-es' and 'lang-en', toggled via body class. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resonant Electrophysiology Project</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        /* Language Toggle Logic */
+        body.lang-es .lang-en { display: none !important; }
+        body.lang-en .lang-es { display: none !important; }
+
+        /* Tab Logic */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scientific Paper Formatting */
+        .academic-text { @apply text-slate-700 leading-relaxed space-y-4 text-justify; }
+        .academic-text p { @apply mb-4; }
+        .academic-text h2 { @apply text-2xl font-bold text-slate-900 mt-8 mb-4 border-b pb-2; }
+        .academic-text h3 { @apply text-xl font-semibold text-slate-800 mt-6 mb-3; }
+        .math-block { @apply bg-slate-50 p-4 rounded-lg my-4 overflow-x-auto text-center border border-slate-200; }
+        
+        /* CSS Figures */
+        .css-diagram-box { @apply bg-slate-50 border border-slate-300 rounded-lg p-6 my-6 flex flex-col items-center justify-center space-y-4 shadow-inner; }
+        .block-node { @apply px-4 py-2 bg-blue-100 border-2 border-blue-600 text-blue-900 font-bold rounded shadow-sm text-center text-sm; }
+        .block-arrow { @apply text-slate-400 font-bold text-xl; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-100 lang-es text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 font-bold text-lg tracking-wider">
+                    <span class="text-blue-400">Resonant</span>Electrophysiology
+                </div>
+                
+                <!-- Language Toggle -->
+                <button id="langToggleBtn" onclick="toggleLanguage()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-medium transition-colors border border-slate-500">
+                    <span class="lang-es">🌐 Switch to English</span>
+                    <span class="lang-en">🌐 Cambiar a Español</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <div class="bg-slate-800 border-t border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex space-x-4 overflow-x-auto py-3" aria-label="Tabs">
+                    <button onclick="switchTab('tab-intro')" id="btn-tab-intro" class="tab-btn bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">1. Proyecto y Arquitectura</span>
+                        <span class="lang-en">1. Project & Architecture</span>
+                    </button>
+                    <button onclick="switchTab('tab-varactor')" id="btn-tab-varactor" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">2. Transductor Varicap</span>
+                        <span class="lang-en">2. Varicap Transducer</span>
+                    </button>
+                    <button onclick="switchTab('tab-crosscoupled')" id="btn-tab-crosscoupled" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">3. Teoría Cross-Coupled</span>
+                        <span class="lang-en">3. Cross-Coupled Theory</span>
+                    </button>
+                    <button onclick="switchTab('tab-dsp')" id="btn-tab-dsp" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">4. Procesamiento (DSP)</span>
+                        <span class="lang-en">4. Signal Processing (DSP)</span>
+                    </button>
+                    <button onclick="switchTab('tab-references')" id="btn-tab-references" class="tab-btn text-slate-300 hover:bg-slate-700 hover:text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors">
+                        <span class="lang-es">5. Referencias</span>
+                        <span class="lang-en">5. References</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
+        <div class="bg-white shadow-lg rounded-xl p-8 border border-slate-200">
+
+            <!-- ================= SECTION 1: PROJECT & ARCHITECTURE ================= -->
+            <section id="tab-intro" class="tab-content active academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Introducción y Arquitectura del Sistema</span>
+                    <span class="lang-en">Introduction and System Architecture</span>
+                </h1>
+
+                <div class="css-diagram-box">
+                    <span class="text-xs text-slate-500 font-mono mb-2"></span>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 w-full">
+                        <div class="block-node bg-red-100 border-red-600 text-red-900">Músculo (Fibras)<br/><span class="text-xs font-normal">0.05-5 mV EMG</span></div>
+                        <div class="block-arrow transform rotate-90 md:rotate-0">➔</div>
+                        <div class="block-node">Sensor Varicap<br/><span class="text-xs font-normal">Modulación $\Delta C$</span></div>
+                        <div class="block-arrow transform rotate-90 md:rotate-0">➔</div>
+                        <div class="block-node">Resonador LC Activo<br/><span class="text-xs font-normal">50-200 MHz</span></div>
+                        <div class="block-arrow transform rotate-90 md:rotate-0"> 〰️ Acoplamiento WPT 〰️ </div>
+                        <div class="block-node bg-emerald-100 border-emerald-600 text-emerald-900">Lector Externo<br/><span class="text-xs font-normal">SDR & DSP</span></div>
+                    </div>
+                </div>
+
+                <div class="lang-es">
+                    <p>La adquisición de señales bioelectrónicas de alta fidelidad, particularmente la electromiografía (EMG) desde el interior del cuerpo humano, presenta profundos desafíos en el aislamiento de señales, la multiplexación y la resolución espacial. La electromiografía de superficie tradicional sufre de limitaciones físicas y anatómicas fundamentales, principalmente una severa diafonía de señales (cross-talk) y ambigüedad de profundidad [1].</p>
+                    <p>Con electrodos de superficie, una señal eléctrica débil que se propaga desde un músculo superficial que sufre una contracción ligera es virtualmente indistinguible de una señal fuerte que se origina en un músculo profundo que sufre una contracción fuerte. Este problema de separación de fuentes hace que la identificación precisa de la actividad de los aproximadamente dieciocho músculos distintos del antebrazo humano sea imposible utilizando solo sensores externos [2]. Para aislar los potenciales de acción de unidades motoras (MUAPs), los sensores deben implantarse directamente sobre las fibras musculares.</p>
+                    <h2>El Cambio de Paradigma: Multiplexación por División de Frecuencia (FDM)</h2>
+                    <p>El estándar actual depende de la multiplexación en el dominio del tiempo, la cual escala excepcionalmente mal; a medida que aumentan los canales, la tasa de muestreo, el consumo de energía y el ancho de banda de telemetría crecen linealmente. Por el contrario, la <strong>Multiplexación por División de Frecuencia (FDM)</strong> ofrece un cambio necesario. El acoplamiento capacitivo a través de la piel soporta un ancho de banda amplio y altamente eficiente en el rango de <strong>50 a 200 MHz</strong>. Al asignar una subbanda estrecha y discreta a cada sensor, FDM puede aumentar teóricamente el número de canales simultáneos en un orden de magnitud [1], [3].</p>
+                    <p>El objetivo de este proyecto es lograr una mejora de 100 veces, permitiendo el registro simultáneo de $\ge 1000$ canales con resolución de fibra única utilizando circuitos resonantes activos totalmente implantados.</p>
+                    
+                    <h2>Límites Térmicos y Presupuesto de Energía</h2>
+                    <p>Los dispositivos médicos implantables activos están regidos por normas regulatorias internacionales estrictas, notablemente la <strong>ISO 14708</strong>, que dicta que el aumento máximo de temperatura permitido ($\Delta T$) en la superficie de un implante no debe exceder los <strong>2°C</strong>. Para el sistema de 1000 canales, el presupuesto de energía interna total está limitado a <strong>100 mW</strong>. En consecuencia, la energía máxima disponible por canal individual está estrictamente limitada a <strong>$\le 100$ µW</strong> [1].</p>
+                    <p>La energía se suministra a través de una microbatería recargable de iones de litio (50 a 200 mAh, 3.6 a 4.2 V) recargada mediante acoplamiento inductivo de campo cercano (WPT). La carga debe disipar no más de 35 mW de calor para mantener el límite térmico. Utilizando un ciclo de trabajo (duty cycle) del 10%, la batería dura hasta 72 horas, haciendo viable la recarga semanal.</p>
+                </div>
+
+                <div class="lang-en">
+                    <p>The acquisition of high-fidelity bioelectronic signals, particularly electromyography (EMG) from within the human body, presents profound challenges in signal isolation, multiplexing, and spatial resolution. Traditional surface electromyography suffers from fundamental physical and anatomical limitations, primarily severe signal cross-talk and depth ambiguity [1].</p>
+                    <p>With surface electrodes, a weak electrical signal propagating from a superficial muscle undergoing light contraction is virtually indistinguishable from a strong signal originating from a deep muscle undergoing heavy contraction. This source-separation problem renders the precise identification of activity from the approximately eighteen distinct muscles in the human forearm impossible using external sensors alone [2]. To achieve single-fiber resolution, sensors must be physically implanted directly onto the muscle fibers.</p>
+                    <h2>The Paradigm Shift: Frequency-Domain Multiplexing (FDM)</h2>
+                    <p>The current standard relies heavily on time-domain multiplexing, which scales exceptionally poorly; as channel counts increase, the sampling rate, power consumption, and telemetry bandwidth grow linearly. Conversely, <strong>Frequency-Domain Multiplexing (FDM)</strong> offers a necessary paradigm shift. Capacitive coupling through the skin supports a wide, highly efficient bandwidth in the <strong>50 to 200 MHz</strong> range. By allocating a discrete, narrow frequency sub-band to each sensor, FDM can theoretically increase the simultaneous channel count by an order of magnitude [1], [3].</p>
+                    <p>The objective of this project is to achieve a 100-fold improvement, enabling simultaneous recording from $\ge 1000$ channels at single-fiber spatial resolution using fully implanted active resonant circuits.</p>
+                    
+                    <h2>Thermal Limits and the Power Budget</h2>
+                    <p>Active implantable medical devices are governed by strict international standards, notably <strong>ISO 14708</strong>, which dictates that the maximum allowable temperature rise ($\Delta T$) at the surface of an implant must strictly not exceed <strong>2°C</strong>. For the 1000-channel system, the total internal power budget is capped at <strong>100 mW</strong>. Consequently, the maximum power available per individual channel is strictly bounded at <strong>$\le 100$ µW</strong> [1].</p>
+                    <p>Power is supplied via a rechargeable Li-ion micro-battery (50 to 200 mAh, 3.6 to 4.2 V) recharged via near-field inductive coupling (WPT). Charging must dissipate no more than 35 mW of heat to maintain the thermal limit. By utilizing a 10% duty cycle, the battery lasts up to 72 hours, making weekly recharging highly feasible.</p>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 2: TRANSDUCER & VARACTOR ================= -->
+            <section id="tab-varactor" class="tab-content academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">La Interfaz del Transductor: Varicap y Resonancia LC</span>
+                    <span class="lang-en">The Transducer Interface: Varicap and LC Resonance</span>
+                </h1>
+
+                <div class="css-diagram-box">
+                    <span class="text-xs text-slate-500 font-mono mb-2"></span>
+                    <div class="grid grid-cols-3 gap-4 text-center font-mono text-sm items-center">
+                        <div class="flex flex-col items-end">
+                            <span class="text-red-600 font-bold">EMG (+)</span>
+                            <div class="h-1 w-12 bg-slate-800 mt-2"></div>
+                            <span class="text-xs mt-1">$R_{bias}$ (100k$\Omega$)</span>
+                        </div>
+                        <div class="border-4 border-slate-800 rounded-full h-24 w-24 flex items-center justify-center bg-white shadow-md relative">
+                            <span class="text-2xl font-bold">▶|◀</span>
+                            <span class="absolute -bottom-6 font-bold text-slate-600">$C[V_{EMG}]$</span>
+                        </div>
+                        <div class="flex flex-col items-start">
+                            <span class="text-blue-600 font-bold">EMG (-)</span>
+                            <div class="h-1 w-12 bg-slate-800 mt-2"></div>
+                            <span class="text-xs mt-1">$R_{bias}$ (100k$\Omega$)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lang-es">
+                    <p>La interfaz entre el tejido biológico y el circuito resonante se rige por la necesidad de una transducción precisa y sin ruido del voltaje fisiológico. El sistema emplea una topología de <strong>diodo varactor diferencial</strong> (o varicap) para lograr esto. Una aclaración fundamental es que los terminales del varactor diferencial no son una emulación; representan una <strong>conexión física directa al tejido biológico</strong> a través de electrodos EMG bipolares [1].</p>
+                    
+                    <h3>Mecánica de Transducción Directa</h3>
+                    <p>El voltaje fisiológico generado por el disparo de una sola unidad motora (que varía de 0.05 a 5 mV) se aplica directamente a los terminales $V_{in}^+$ y $V_{in}^-$ del varactor. Este voltaje biológico modula el ancho de la región de agotamiento del diodo, cambiando así su capacitancia de unión y desplazando la frecuencia de resonancia del tanque LC [1].</p>
+                    <p>Se utilizan resistencias de alto valor (ej. 100 k$\Omega$) para aislar los circuitos de RF del tejido, previniendo que el sensor extraiga corriente del músculo. Además, capacitores de bloqueo ($C_b$) previenen que la onda portadora de RF de 50-200 MHz se irradie directamente en el músculo.</p>
+
+                    <h2>Teoría del Resonador LC y Sensibilidad</h2>
+                    <p>El sistema FDM consta de una matriz de $N$ resonadores LC paralelos acoplados a una línea de transmisión de dos hilos. Cada resonador $i$ está acoplado mediante un capacitor específico $C_c^i$. La impedancia de un solo resonador LC paralelo acoplado en serie $Z_{Res}^i$ se define matemáticamente como:</p>
+                    
+                    <div class="math-block">
+                        $$Z_{Res}^i = \frac{1}{j\omega C_c^i} + \left( \frac{1}{j\omega L_i} + j\omega C[V_i(t)] \right)^{-1}$$
+                    </div>
+                    
+                    <p>Cuando se integra en la línea de transmisión completa con terminación $R$, la función de transferencia global $\vec{H}$ es:</p>
+                    <div class="math-block">
+                        $$\vec{H} = \frac{1}{2 + Z_R \sum_{i=1}^{N} \frac{1}{Z_{Res}^i}}$$
+                    </div>
+
+                    <h3>Cálculo de Ancho de Banda y Frecuencias de Corte ($\omega_{\pm}$)</h3>
+                    <p>Para estimar de manera conservadora el ancho de banda consumido por el resonador, se evalúa cuándo la amplitud de transferencia cae a la mitad de su valor máximo (lo que equivale a un cuarto de la potencia, $\frac{1}{4}$) [1]. Analizando un solo canal acoplado (donde $C_t = C_{varactor}$):</p>
+                    <div class="math-block">
+                        $$\frac{1}{4} = \frac{1}{\sqrt{4 + \left( \frac{R\omega(C_t + C_0)}{1 - \omega^2 L C_0 - \omega^2 L C_t} \right)^2}}$$
+                    </div>
+                    <p>Elevando al cuadrado y reordenando, obtenemos una ecuación cuadrática en función de $\omega$:</p>
+                    <div class="math-block">
+                        $$0 = L\sqrt{12}\omega^2 + R\omega - \frac{\sqrt{12}}{C_0 + C_t}$$
+                    </div>
+                    <p>Resolviendo esta ecuación mediante la fórmula general, las raíces ($\omega_{\pm}$) que definen los límites del ancho de banda están dadas por [1]:</p>
+                    <div class="math-block">
+                        $$\omega_{\pm} = \frac{-R \pm \sqrt{R^2 + \frac{48L}{C_0 + C_t}}}{2L\sqrt{12}}$$
+                    </div>
+                </div>
+
+                <div class="lang-en">
+                    <p>The interface between the biological tissue and the resonant circuit is governed by the necessity for precise, noise-free transduction of the physiological voltage. The system employs a <strong>differential varactor diode</strong> topology. A fundamental clarification is that the differential varactor terminals do not represent an emulation; they act as a <strong>direct physical connection to the biological tissue</strong> via bipolar EMG electrodes [1].</p>
+                    
+                    <h3>Direct Transduction Mechanics</h3>
+                    <p>The physiological voltage generated by a single motor unit action potential (0.05 to 5 mV) is applied directly to the $V_{in}^+$ and $V_{in}^-$ terminals of the varactor. This biological voltage modulates the width of the diode's depletion region, changing its junction capacitance and shifting the resonant frequency of the LC tank [1].</p>
+                    <p>High-impedance resistors (e.g., 100 k$\Omega$) are used to decouple RF circuitry, preventing physiological current draw. Furthermore, blocking capacitors ($C_b$) prevent the 50-200 MHz RF carrier wave from radiating directly into the muscle.</p>
+
+                    <h2>LC Resonator Theory and Sensitivity</h2>
+                    <p>The FDM system consists of an array of $N$ parallel LC resonators coupled to a single two-wire transmission line. Each individual resonator $i$ is coupled via a specific capacitor $C_c^i$. The impedance of a single series-coupled parallel LC resonator $Z_{Res}^i$ is mathematically defined as:</p>
+                    
+                    <div class="math-block">
+                        $$Z_{Res}^i = \frac{1}{j\omega C_c^i} + \left( \frac{1}{j\omega L_i} + j\omega C[V_i(t)] \right)^{-1}$$
+                    </div>
+                    
+                    <p>When integrated into the full transmission line with termination $R$, the overall system transfer function $\vec{H}$ is:</p>
+                    <div class="math-block">
+                        $$\vec{H} = \frac{1}{2 + Z_R \sum_{i=1}^{N} \frac{1}{Z_{Res}^i}}$$
+                    </div>
+
+                    <h3>Bandwidth Calculation and Cutoff Frequencies ($\omega_{\pm}$)</h3>
+                    <p>To conservatively estimate how much frequency bandwidth the resonator will consume, we evaluate when the transfer amplitude drops to half of its maximum (equivalent to one-fourth power, $\frac{1}{4}$) [1]. Analyzing a single coupled channel (where $C_t = C_{varactor}$):</p>
+                    <div class="math-block">
+                        $$\frac{1}{4} = \frac{1}{\sqrt{4 + \left( \frac{R\omega(C_t + C_0)}{1 - \omega^2 L C_0 - \omega^2 L C_t} \right)^2}}$$
+                    </div>
+                    <p>Squaring and rearranging yields a quadratic equation in terms of $\omega$:</p>
+                    <div class="math-block">
+                        $$0 = L\sqrt{12}\omega^2 + R\omega - \frac{\sqrt{12}}{C_0 + C_t}$$
+                    </div>
+                    <p>Solving this quadratic gives the roots ($\omega_{\pm}$) that define the bandwidth limits [1]:</p>
+                    <div class="math-block">
+                        $$\omega_{\pm} = \frac{-R \pm \sqrt{R^2 + \frac{48L}{C_0 + C_t}}}{2L\sqrt{12}}$$
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 3: CROSS COUPLED ================= -->
+            <section id="tab-crosscoupled" class="tab-content academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Mejora Activa de Q: Topología Cross-Coupled</span>
+                    <span class="lang-en">Active Q-Enhancement: Cross-Coupled Topology</span>
+                </h1>
+
+                <div class="css-diagram-box">
+                    <span class="text-xs text-slate-500 font-mono mb-2"></span>
+                    <div class="flex flex-col items-center">
+                        <div class="w-32 h-12 border-2 border-slate-600 rounded flex items-center justify-center font-bold mb-4 bg-slate-100">
+                            Tanque LC ($R_p$)
+                        </div>
+                        <div class="flex space-x-8">
+                            <div class="flex flex-col items-center">
+                                <div class="h-8 w-1 bg-slate-800"></div>
+                                <div class="border-2 border-slate-800 p-2 text-xs font-mono font-bold bg-white">M1 (NMOS)</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="h-8 w-1 bg-slate-800"></div>
+                                <div class="border-2 border-slate-800 p-2 text-xs font-mono font-bold bg-white">M2 (NMOS)</div>
+                            </div>
+                        </div>
+                        <div class="text-center font-mono mt-2 text-sm">Gate 1 $\leftrightarrow$ Drain 2<br/>Gate 2 $\leftrightarrow$ Drain 1</div>
+                        <div class="mt-4 font-bold text-amber-600">$R_{in} = -2 / g_m$</div>
+                    </div>
+                </div>
+
+                <div class="lang-es">
+                    <p>El ancho de banda asignado por canal es de 150 kHz. Para evitar la diafonía, el ancho de banda a -3dB debe ser $\le 30$ kHz. En consecuencia, el Factor de Calidad (Q) requerido excede los 1,600 a 50 MHz y los <strong>6,667 a 200 MHz</strong>. Los inductores pasivos en tejido alcanzan a lo sumo un Q de 50. Por lo tanto, <strong>la mejora activa del factor Q es absolutamente obligatoria</strong> [1], [4].</p>
+
+                    <h2>El Principio de Resistencia Negativa y Ruido de Fase</h2>
+                    <p>Un resonador LC puede modelarse con una resistencia parásita $R_p$. Para mejorar el Q, se coloca un circuito activo en paralelo para sintetizar una <strong>resistencia negativa ($-R_{neg}$)</strong>. La nueva resistencia efectiva $R_{eff}$ del tanque se convierte en:</p>
+                    <div class="math-block">
+                        $$R_{eff} = \frac{R_p R_{neg}}{R_{neg} - R_p}$$
+                    </div>
+                    <p>A medida que $R_{neg}$ se acerca a $R_p$, el Q tiende a infinito. Sin embargo, existe un delicado compromiso (trade-off) con el ruido. El ruido térmico intrínseco de los transistores se inyecta en el tanque y se convierte en ruido de fase (Phase Noise) debido a la no linealidad del sistema. Aunque aumentar el Q reduce el ancho de banda de ruido según la ecuación de Leeson, la transconductancia $g_m$ necesaria añade ruido de corriente térmica de canal ($4kT\gamma g_m$). Se debe optimizar el circuito justo por debajo del límite de oscilación (Criterio de Barkhausen) maximizando la relación Señal/Ruido sin inestabilidad.</p>
+
+                    <h2>El Par Diferencial Cross-Coupled</h2>
+                    <p>Para sintetizar esta resistencia sin utilizar una "tierra" biológica (lo cual está estrictamente prohibido por seguridad normativa), se utiliza una topología <strong>cross-coupled</strong> con transistores CMOS NMOS/PMOS complementarios [1], [4].</p>
+
+                    <p>La impedancia de entrada vista hacia el par de transistores cruzados es puramente real y negativa. Para una estructura complementaria, la resistencia negativa combinada es:</p>
+                    <div class="math-block">
+                        $$R_{neg} = - \frac{2}{g_{mn} + g_{mp}}$$
+                    </div>
+                    
+                    <h3>Simulaciones Rigurosas en Cadence</h3>
+                    <p>Para cumplir con el límite de 100 $\mu$W, los transistores operan en la región subumbral, maximizando la relación $g_m / I_D$. Esto requiere simulaciones en <strong>Cadence Spectre</strong>:</p>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li><strong>Análisis STB (Estabilidad):</strong> Utiliza el Método de Tian con sondas (`iprobe`) insertadas analíticamente en el lazo diferencial para medir la ganancia del lazo y el margen de fase sin perturbar la impedancia DC [1].</li>
+                        <li><strong>Análisis PSS y PNOISE:</strong> Simula el comportamiento de señales grandes frente a variaciones biológicas en estado estable periódico y cuantifica la conversión espectral de ruido.</li>
+                    </ul>
+                </div>
+
+                <div class="lang-en">
+                    <p>The allocated bandwidth per channel is 150 kHz. To prevent cross-talk, the -3dB bandwidth must be $\le 30$ kHz. Consequently, the required Quality Factor (Q) exceeds 1,600 at 50 MHz and <strong>6,667 at 200 MHz</strong>. Passive microfabricated inductors in tissue reach a maximum Q of 50. Therefore, <strong>active Q-enhancement is absolutely mandatory</strong> [1], [4].</p>
+
+                    <h2>The Negative Resistance Principle and Phase Noise</h2>
+                    <p>An LC resonator can be modeled with a parasitic parallel resistance $R_p$. To enhance Q, an active circuit is placed in parallel to synthesize a <strong>negative resistance ($-R_{neg}$)</strong>. The new effective resistance $R_{eff}$ of the tank becomes:</p>
+                    <div class="math-block">
+                        $$R_{eff} = \frac{R_p R_{neg}}{R_{neg} - R_p}$$
+                    </div>
+                    <p>As $R_{neg}$ approaches $R_p$, Q approaches infinity. However, there is a delicate trade-off with noise. Intrinsic thermal noise from transistors is injected into the tank and upconverts into Phase Noise due to system nonlinearity. While increasing Q reduces the noise bandwidth per Leeson's equation, the necessary transconductance $g_m$ adds thermal channel current noise ($4kT\gamma g_m$). The circuit must be optimized just below the oscillation limit (Barkhausen Criterion) to maximize SNR without instability.</p>
+
+                    <h2>The Cross-Coupled Differential Pair</h2>
+                    <p>To synthesize this resistance without using a biological "ground" (strictly prohibited for safety), a <strong>cross-coupled</strong> topology with complementary CMOS NMOS/PMOS transistors is utilized [1], [4].</p>
+
+                    <p>The input impedance looking into the cross-coupled pair is purely real and negative. For a complementary structure, the combined negative resistance is:</p>
+                    <div class="math-block">
+                        $$R_{neg} = - \frac{2}{g_{mn} + g_{mp}}$$
+                    </div>
+                    
+                    <h3>Rigorous Cadence Simulations</h3>
+                    <p>To meet the 100 $\mu$W limit, transistors operate in the subthreshold region, maximizing the $g_m / I_D$ ratio. This requires simulations in <strong>Cadence Spectre</strong>:</p>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li><strong>STB Analysis (Stability):</strong> Utilizes Tian's Method with probes (`iprobe`) analytically inserted to measure loop gain and phase margin without disturbing DC impedance [1].</li>
+                        <li><strong>PSS and PNOISE Analysis:</strong> Simulates large-signal behavior against biological variations in periodic steady-state and quantifies spectral noise upconversion.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 4: SIGNAL PROCESSING (DSP) ================= -->
+            <section id="tab-dsp" class="tab-content academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Procesamiento Digital de Señales (DSP) para Desmodulación</span>
+                    <span class="lang-en">Digital Signal Processing (DSP) for Demodulation</span>
+                </h1>
+
+                <div class="css-diagram-box flex-row items-end h-40 gap-1 pb-4">
+                    <span class="absolute mt-36 text-xs text-slate-500 font-mono"></span>
+                    <!-- Spectrum representation -->
+                    <div class="w-4 h-12 bg-slate-300"></div>
+                    <div class="w-4 h-16 bg-slate-300"></div>
+                    <div class="w-8 h-32 bg-blue-500 border-b-4 border-red-500 relative flex justify-center"><span class="absolute -top-6 text-xs font-bold text-blue-700">CH 34</span></div>
+                    <div class="w-4 h-20 bg-slate-300"></div>
+                    <div class="w-4 h-10 bg-slate-300"></div>
+                    <div class="w-4 h-14 bg-slate-300"></div>
+                    <span class="ml-4 font-mono text-sm">$\xrightarrow{Filtro}$</span>
+                    <div class="w-8 h-32 bg-emerald-500 border-b-4 border-red-500 ml-4 relative flex justify-center"><span class="absolute -top-6 text-xs font-bold text-emerald-700">DC (0 Hz)</span></div>
+                </div>
+
+                <div class="lang-es">
+                    <p>Una vez que las señales EMG modulan la matriz de resonadores, un lector externo aplica una señal de excitación de banda ancha que contiene la sumatoria de las 1000 frecuencias portadoras. La señal de retorno debe ser rápidamente desmodulada en el dominio digital (DSP) para evitar mezcladores analógicos físicos complejos y hambrientos de energía en el implante [1].</p>
+
+                    <h2>Construcción en Cuadratura y Transformada de Hilbert</h2>
+                    <p>La mezcla IQ (In-phase / Quadrature) tradicional requiere hardware separado. En su lugar, el sistema FDM calcula la <strong>Señal Analítica</strong>. Computacionalmente, esto se aproxima utilizando la Transformada Rápida de Fourier (FFT) del dominio de tiempo real. Multiplicando las frecuencias positivas por 2 y anulando las frecuencias negativas (equivalente en frecuencia a la Transformada de Hilbert), y haciendo la Transformada Inversa (IFFT), se obtiene una forma de onda compleja con los componentes desplazados 90 grados puramente por matemáticas [1].</p>
+
+                    <h2>Aislamiento de Canales y Extracción de Fase</h2>
+                    <p>La señal se duplica en $N = 1000$ canales de software paralelos. La subconversión se logra multiplicando por una exponencial compleja negativa: $\exp(-j\omega_i t)$, centrando la banda del canal $i$ exactamente en 0 Hz (DC). Luego se aplica un filtro paso bajo $G(\omega)$ digital estricto (Butterworth o FIR) para aislar el canal [1].</p>
+
+                    <p>Finalmente, se extrae el voltaje fisiológico calculando el arcotangente del cociente entre la parte imaginaria y real de la función de transferencia aislada:</p>
+                    <div class="math-block">
+                        $$\phi_i(t) = \arctan \left( \frac{\text{Im}[H_i(t)]}{\text{Re}[H_i(t)]} \right)$$
+                    </div>
+                    <p>El salto de fase ("phase wrapping") se corrige mediante un algoritmo de desdoblamiento de fase continuo (módulo $2\pi$), entregando finalmente la reconstrucción directa del potencial de acción muscular.</p>
+                </div>
+
+                <div class="lang-en">
+                    <p>Once the EMG signals modulate the array of active resonators, an external reader applies a wideband excitation signal containing the summation of all 1000 carrier frequencies. The returning signal must be rapidly demodulated in the digital domain (DSP) to avoid complex and power-hungry physical analog mixers within the implant [1].</p>
+
+                    <h2>Quadrature Construction and Hilbert Transform</h2>
+                    <p>Traditional IQ mixing requires separate hardware. Instead, the FDM system calculates the <strong>Analytic Signal</strong>. Computationally, this is approximated using the Fast Fourier Transform (FFT) of the real time-domain signal. By multiplying positive frequencies by 2 and zeroing out negative frequencies (frequency-domain equivalent of the Hilbert Transform), and performing the Inverse Transform (IFFT), a complex waveform is generated with components shifted by exactly 90 degrees purely through math [1].</p>
+
+                    <h2>Channel Isolation and Phase Extraction</h2>
+                    <p>The signal is duplicated into $N = 1000$ parallel software pipelines. Downconversion is achieved by multiplying by a negative complex exponential: $\exp(-j\omega_i t)$, centering the channel's bandwidth exactly at 0 Hz (DC). A strict digital low-pass filter $G(\omega)$ (Butterworth or FIR) is then applied to isolate the channel [1].</p>
+
+                    <p>Finally, the physiological voltage is extracted by calculating the arctangent of the ratio between the imaginary and real parts of the isolated transfer function:</p>
+                    <div class="math-block">
+                        $$\phi_i(t) = \arctan \left( \frac{\text{Im}[H_i(t)]}{\text{Re}[H_i(t)]} \right)$$
+                    </div>
+                    <p>Phase wrapping is corrected via a continuous phase-unwrapping algorithm (modulo $2\pi$), ultimately delivering the direct reconstruction of the muscle action potential.</p>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 5: REFERENCES (NEW) ================= -->
+            <section id="tab-references" class="tab-content academic-text">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-6 border-b-2 border-blue-600 pb-2 inline-block">
+                    <span class="lang-es">Referencias Bibliográficas</span>
+                    <span class="lang-en">References</span>
+                </h1>
+
+                <div class="space-y-6 text-sm text-slate-700 pl-4">
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[1]</span>
+                        <span>S. Herman, "Theory, Design, and Implementation of Hunnid Channel EMG," Ph.D. dissertation, Dept. Mech. Aerosp. Eng., Univ. California, Los Angeles, CA, USA, 2026.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[2]</span>
+                        <span>T. Clites and C. Velez Cuervo, "100× Improvement in Bioelectronic Signal Acquisition," UCLA/UCI Collaboration Grant Proposal, 2025.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[3]</span>
+                        <span>J. Riistama <em>et al.</em>, "Totally passive wireless biopotential measurement sensor using inductively coupled resonance circuits," <em>Sensors and Actuators A: Physical</em>, vol. 157, no. 2, pp. 313-321, 2010.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[4]</span>
+                        <span>E. Dülger and E. Sanchez-Sinencio, "Low-voltage low-power high-Q CMOS RF bandpass filter," <em>IEEE J. Solid-State Circuits</em>, vol. 38, no. 8, pp. 1431-1436, Aug. 2003.</span>
+                    </div>
+                    <div class="flex">
+                        <span class="font-bold w-8 flex-shrink-0">[5]</span>
+                        <span>ISO/TC 150, "Implants for surgery — Active implantable medical devices — Part 1: General requirements for safety, marking and for information to be provided by the manufacturer," ISO 14708-1:2014, 2014.</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-500 py-6 text-center text-sm border-t border-slate-800">
+        <p class="lang-es">Basado en el Documento de Investigación: Resonant Electrophysiology: System Architecture, Active Q-Enhancement, and Digital Signal Processing.</p>
+        <p class="lang-en">Based on the Research Document: Resonant Electrophysiology: System Architecture, Active Q-Enhancement, and Digital Signal Processing.</p>
+        <p class="mt-2">© 2026 UCLA / UCI Bioelectronics Collaboration</p>
+    </footer>
+
+    <!-- Interactive JavaScript -->
+    <script>
+        // Inicializar KaTeX una vez que el DOM esté completamente cargado
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            });
+        });
+
+        // Language Toggle Logic
+        let currentLang = 'es';
+
+        function toggleLanguage() {
+            const body = document.body;
+            if (currentLang === 'es') {
+                body.classList.remove('lang-es');
+                body.classList.add('lang-en');
+                currentLang = 'en';
+            } else {
+                body.classList.remove('lang-en');
+                body.classList.add('lang-es');
+                currentLang = 'es';
+            }
+        }
+
+        // Tab Navigation Logic
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Reset all buttons
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-blue-600', 'text-white');
+                el.classList.add('text-slate-300');
+            });
+
+            // Show selected content
+            document.getElementById(tabId).classList.add('active');
+            // Highlight selected button
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('text-slate-300');
+            activeBtn.classList.add('bg-blue-600', 'text-white');
+        }
+    </script>
+</body>
+</html>

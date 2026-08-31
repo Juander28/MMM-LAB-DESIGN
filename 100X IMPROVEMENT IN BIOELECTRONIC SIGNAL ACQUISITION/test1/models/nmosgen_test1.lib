@@ -1,0 +1,6 @@
+* Generic LTspice-style level-1 NMOS - matches every validated TEST1 sim
+.model NMOSGEN NMOS (Level=1 Vto=0.3 Kp=1m Lambda=0.02 Cgso=0.2f Cgdo=0.2f Cgbo=0.1f)
+* Cuando tengas el modelo de tus TFT IGZO:
+*   1) comenta la linea .model de arriba
+*   2) descomenta:  .include tft_igzo_template.lib
+*   3) en el esquematico cambia model=NMOSGEN por el nombre de tu TFT

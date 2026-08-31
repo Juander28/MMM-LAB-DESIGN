@@ -1,0 +1,86 @@
+** sch_path: /headless/Documents/100X IMPROVEMENT IN BIOELECTRONIC SIGNAL ACQUISITION/test1/cross_coupled_test1.sch
+**.subckt cross_coupled_test1
+VV4 VDD 0 'VDD'
+MM1 D1 D2 ST ST NMOSGEN w=100u l=100u
+MM2 D2 D1 ST ST NMOSGEN w=100u l=100u
+LL1 VDD xl1 'L/2'
+RL1ser xl1 D1 'RS/2'
+LL3 VDD xl3 'L/2'
+RL3ser xl3 D2 'RS/2'
+CC3 D2 D1 'c'
+IItail_src ST 0 'Itail'
+VV1 n01 0 0 AC 1
+RR1 pasp n01 1k
+CC2 pasp n02 'cp'
+CC4 n02 0 'c'
+LL5 n02 xl5 'L'
+RL5ser xl5 0 1
+CC1 pasp n06 70p
+CC6 n06 0 'c'
+LL2 n06 xl2 'L'
+RL2ser xl2 0 1
+VV3 n05 actm 0 AC 1
+RR5 actp n05 1k
+CC9 actp n03 'cpA'
+MM5 n03 actm n04 n04 NMOSGEN w=100u l=100u
+MM6 actm n03 n04 n04 NMOSGEN w=100u l=100u
+LL7 VDD xl7 'L/2'
+RL7ser xl7 n03 'RS/2'
+LL6 VDD xl6 'L/2'
+RL6ser xl6 actm 'RS/2'
+CC5 actm n03 'c'
+IItail_src2 n04 0 'ItailA'
+CC8 actp n07 'cpB'
+MM3 n07 actm n08 n08 NMOSGEN w=100u l=100u
+MM4 actm n07 n08 n08 NMOSGEN w=100u l=100u
+LL8 VDD xl8 'L/2'
+RL8ser xl8 n07 'RS/2'
+LL4 VDD xl4 'L/2'
+RL4ser xl4 actm 'RS/2'
+CC7 actm n07 'C7val'
+IItail_src1 n08 0 'ItailB'
+VV2 n11 act1m 0 AC 1
+RR2 act1p n11 1k
+CC11 act1p n09 'cp'
+MM7 n09 act1m n10 n10 NMOSGEN w=100u l=100u
+MM8 act1m n09 n10 n10 NMOSGEN w=100u l=100u
+LL10 VDD xl10 'L/2'
+RL10ser xl10 n09 'RS/2'
+LL9 VDD xl9 'L/2'
+RL9ser xl9 act1m 'RS/2'
+CC10 act1m n09 'c'
+IItail_src3 n10 0 'Itail'
+**** begin user architecture code
+
+.param VDD=1.5 L=100n RS=1
+.param Itail=130u c=101p cp=0.4p
+.param cpA=280f cpB=155f
+.param ItailA=4.07509m ItailB=0.65260m
+.param C7val=40.362p
+.include models/nmosgen_test1.lib
+.ac lin 50000 35Meg 210Meg
+* zooms (uncomment ONE to measure BW/Q accurately):
+* .ac lin 50000 55.4Meg 56.4Meg
+* .ac lin 50000 99.6Meg 100.4Meg
+
+
+.control
+run
+let vact  = v(actp)-v(actm)
+let vmag  = mag(vact)
+meas ac vbaseA FIND vmag AT=55.45e6
+meas ac vminA  MIN  vmag from=55.7e6  to=56.1e6
+meas ac vbaseB FIND vmag AT=99.65e6
+meas ac vminB  MIN  vmag from=99.85e6 to=100.15e6
+echo depthA_dB (full span underestimates; use zoom .ac for real depth/BW):
+print 20*log10(vbaseA/vminA)
+echo depthB_dB:
+print 20*log10(vbaseB/vminB)
+wrdata test1_ac.csv vact v(pasp)
+echo Ahora corre:  python3 analyze_notch.py test1_ac.csv
+quit
+.endc
+
+**** end user architecture code
+**.ends
+.end

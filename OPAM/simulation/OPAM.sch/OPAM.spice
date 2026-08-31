@@ -1,0 +1,35 @@
+** sch_path: /foss/designs/MMM-LAB DESIGN/OPAM/OPAM.sch
+**.subckt OPAM VDD OUT INN INP BIAS VSS
+*.ipin INP
+*.iopin VDD
+*.ipin INN
+*.iopin VSS
+*.iopin BIAS
+*.opin OUT
+XM2 net2 INP net1 igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XM4 net2 net3 net1 igzo_tft W=400u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM3 net3 net2 net1 igzo_tft W=400u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM5 net3 INN net1 igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XM6 VDD VDD net2 igzo_tft W=140u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM7 VDD VDD net3 igzo_tft W=140u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM8 net1 BIAS VSS igzo_tft W=5000u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM9 net5 net5 VSS igzo_tft W=10u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM10 VDD net4 net5 igzo_tft W=3200u L=70u ov=5u nf=1 m=1 B=0 b_scale=1
+XM11 net6 BIAS VSS igzo_tft W=5000u L=20u ov=5u nf=1 m=1 B=0 b_scale=1
+XM12 net4 net2 net6 igzo_tft W=200u L=280u ov=5u nf=1 m=1 B=0 b_scale=1
+XM13 VDD BOOT_L net4 igzo_tft W=100u L=140u ov=5u nf=1 m=1 B=0 b_scale=1
+XM14 VDD net4 BOOT_L igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XC1 BOOT_L net4 cap_mim W=160.64u L=160.64u
+XM15 OUT OUT VSS igzo_tft W=10u L=200u ov=5u nf=1 m=1 B=0 b_scale=1
+XM16 VDD net7 OUT igzo_tft W=3200u L=70u ov=5u nf=1 m=1 B=0 b_scale=1
+XM17 net8 BIAS VSS igzo_tft W=5000u L=20u ov=5u nf=1 m=1 B=0 b_scale=1
+XM18 net7 net3 net8 igzo_tft W=200u L=280u ov=5u nf=1 m=1 B=0 b_scale=1
+XM19 VDD BOOT_R net7 igzo_tft W=100u L=140u ov=5u nf=1 m=1 B=0 b_scale=1
+XM20 VDD net7 BOOT_R igzo_tft W=5000u L=10u ov=5u nf=1 m=1 B=0 b_scale=1
+XC2 BOOT_R net7 cap_mim W=160.64u L=160.64u
+XC3 INN net2 cap_mim W=160.64u L=160.64u
+XC4 net3 INP cap_mim W=160.64u L=160.64u
+Rb1 BOOT_L VDD 1T
+Rb2 BOOT_R VDD 1T
+**.ends
+.end
