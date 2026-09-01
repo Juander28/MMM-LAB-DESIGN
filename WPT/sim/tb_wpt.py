@@ -43,8 +43,10 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-NGSPICE = "/foss/tools/bin/ngspice"
-PDK = "/foss/designs/TFT-MMM-LAB-PDK/libs.tech/ngspice"
+import params as P                                        # noqa: E402
+
+NGSPICE = P.NGSPICE
+PDK = P.PDK_NGSPICE
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 CORNERS = ("best", "tt", "all")
@@ -179,11 +181,21 @@ def measures(out):
     return d
 
 
-def load_design():
-    """The coils the two optimisers chose, in the units the netlist wants."""
+def load_design(from_params=True):
+    """The link, as params.py describes it.
+
+    `from_params=False` falls back to the JSON the phase-1 sweeps wrote, which
+    is how the phase-1 numbers are reproduced unchanged.
+    """
     rx = json.load(open(os.path.join(HERE, "rx_coil.json")))
     tx = json.load(open(os.path.join(HERE, "tx_coil.json")))
     ch, ct = rx["chosen"], tx["chosen"]
+    if from_params:
+        return {"f": P.F_OP,
+                "l_rx": P.RX_L, "r_rx": P.RX_R,
+                "l_tx": P.TX_L, "r_tx": P.TX_R,
+                "k": P.K_OVERRIDE if P.K_OVERRIDE is not None else coupling_now(),
+                "cres": P.C_RES, "rx": rx, "tx": tx}
     return {
         "f": tx["f_hz"],
         "l_rx": ch["l_nh"] * 1e-9, "r_rx": ch["r_ac"],
@@ -201,8 +213,8 @@ SHORT_C = 1.0               # a capacitor big enough to be a wire
 OPEN_C = 1e-18              # a capacitor small enough to be nothing
 
 
-def build(d, corner="tt", analysis="", coils=COILS_FLAT, vamp=10.0, rsrc=1.0,
-          rload=1e6, cout=10e-6, wtft=1000e-6, ltft=10e-6, ov=5e-6,
+def build(d, corner=None, analysis="", coils=COILS_FLAT, vamp=None, rsrc=None,
+          rload=None, cout=None, wtft=None, ltft=None, ov=None,
           cres=None, k=None, f=None, ctx=None, cprx=OPEN_C, ccpl=OPEN_C):
     """ctx defaults to the value that series-resonates the transmit loop.
 
@@ -211,9 +223,21 @@ def build(d, corner="tt", analysis="", coils=COILS_FLAT, vamp=10.0, rsrc=1.0,
     untuned it limits the current to 18 mA and the driver delivers 2 mW of a
     requested 4 W.  Pass ctx=SHORT_C to see that happen.
     """
+    # Every default comes from params.py.  Nothing in this file carries its
+    # own copy of a design value, so editing params.py is the whole workflow.
+    corner = P.CORNER if corner is None else corner
+    vamp = P.vamp_for_power() if vamp is None else vamp
+    rsrc = P.R_SRC if rsrc is None else rsrc
+    rload = P.R_LOAD if rload is None else rload
+    cout = P.C_OUT if cout is None else cout
+    wtft = P.TFT_W if wtft is None else wtft
+    ltft = P.TFT_L if ltft is None else ltft
+    ov = P.TFT_OV if ov is None else ov
     f = f or d["f"]
     if ctx is None:
-        ctx = tx_resonant_c(d, f)
+        ctx = tx_resonant_c(d, f) if P.TX_TUNE else SHORT_C
+    if k is None and P.K_OVERRIDE is not None:
+        k = P.K_OVERRIDE
     return NETLIST.format(
         pdk=PDK, corner=corner, f=f, vamp=vamp, rsrc=rsrc, rload=rload,
         cres=cres if cres is not None else d["cres"], cout=cout,
@@ -221,6 +245,18 @@ def build(d, corner="tt", analysis="", coils=COILS_FLAT, vamp=10.0, rsrc=1.0,
         coils=coils.format(l_tx=d["l_tx"], r_tx=d["r_tx"], l_rx=d["l_rx"],
                            r_rx=d["r_rx"], k=k if k is not None else d["k"]),
         analysis=analysis)
+
+
+def coupling_now():
+    """k for the two coils params.py describes, at the separation it sets."""
+    import rx_coil
+    import tx_coil
+    tx = tx_coil.solenoid(P.TX_D_MM, P.TX_N, P.TX_AWG, P.TX_LAYERS)
+    rxr = rx_coil.turn_radii(P.RX_W_UM, P.RX_GAP_UM, P.RX_N, P.RX_SHAPE,
+                             P.RX_AREA_UM)
+    import link
+    m = link.mutual_fast(tx["radii"], rxr, z_a=tx["z_of"], gap_z=P.Z_MM * 1e-3)
+    return link.coupling(m, tx["l_h"], P.RX_L)
 
 
 def tx_resonant_c(d, f=None):
@@ -237,8 +273,17 @@ def ac(d, fmin=1e3, fmax=1e7, **kw):
     return m, out
 
 
-def transient(d, cycles_settle=40, cycles_meas=20, pts=200, vout0=0.0, **kw):
-    """Steady-state transient.  Settles first, measures over whole cycles."""
+def transient(d, cycles_settle=40, cycles_meas=20, pts=None, vout0=0.0, **kw):
+    """A transient run, measured over whole cycles after a settling stretch.
+
+    vout0 is a WARM START: it is written as `.ic v(out)=`, so a run can be
+    resumed from where the previous one ended instead of charging the output
+    capacitor from zero again.  That is what makes the Bode sweep in
+    bode_tran.py affordable - at 10 kHz the filter's time constant is a
+    thousand carrier periods, and starting each frequency cold would mean
+    simulating the charge-up twenty-three times over.
+    """
+    pts = P.BODE_PTS_PER_PERIOD if pts is None else pts
     f = kw.get("f") or d["f"]
     per = 1.0 / f
     t1 = cycles_settle * per
@@ -258,8 +303,11 @@ def transient(d, cycles_settle=40, cycles_meas=20, pts=200, vout0=0.0, **kw):
     if "vout_s" in m and "vout_e" in m:
         span = abs(m["vout_e"] - m["vout_s"])
         ref = max(abs(m.get("vout_avg", 0.0)), 1e-12)
-        m["drift_pct"] = 100.0 * span / ref
-        m["settled"] = m["drift_pct"] < 1.0
+        m["drift"] = span / ref
+        m["drift_pct"] = 100.0 * m["drift"]
+        m["settled"] = m["drift"] < 1.0e-2
+    m["cycles_settle"] = cycles_settle
+    m["cycles_meas"] = cycles_meas
     return m, out
 
 

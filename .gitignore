@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 WPT/sim/*.log
+WPT/sim/tmp*.spice
+WPT/sim/.xschemrc*

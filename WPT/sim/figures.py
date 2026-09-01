@@ -475,3 +475,161 @@ def coupling_capacitor(sw):
            logx=True, logy=True)
     fig.tight_layout()
     return fig
+
+
+# --------------------------------------------------------------------------
+# Phase 2: the transient Bode, the coupling study
+# --------------------------------------------------------------------------
+
+def bode_voltage(b):
+    """The settled voltage on C3 against frequency - what was asked for."""
+    fix = [r for r in b["fixed"]]
+    ret = [r for r in b["retuned"]]
+    fig, ax = plt.subplots(figsize=(A4W, 2.6))
+    for rows, lab, col, ls in ((fix, "transmitter tuned once, at f_op", "a", "-"),
+                               (ret, "re-tuned at every point", "c", "--")):
+        ok = [r for r in rows if r["settled"]]
+        bad = [r for r in rows if not r["settled"]]
+        ax.plot([r["f_hz"] / 1e3 for r in ok], [max(r["vout"], 1e-12) for r in ok],
+                color=SERIES[col], lw=1.6, ls=ls, marker="o", ms=2.5)
+        if bad:
+            ax.plot([r["f_hz"] / 1e3 for r in bad],
+                    [max(r["vout"], 1e-12) for r in bad], color=SERIES[col],
+                    lw=0, marker="o", ms=5, mfc="white", mew=1.2)
+    pk = b["peak"]
+    ax.annotate("peak %.3f V\nat %.1f kHz" % (pk["vout"], pk["f_hz"] / 1e3),
+                (pk["f_hz"] / 1e3, pk["vout"]), textcoords="offset points",
+                xytext=(-14, -30), size=7.5, color=MARK, weight="bold",
+                ha="right")
+    ax.annotate("tuned once", (fix[len(fix) // 3]["f_hz"] / 1e3,
+                               max(fix[len(fix) // 3]["vout"], 1e-12)),
+                textcoords="offset points", xytext=(6, 4), size=7.5,
+                color=SERIES["a"], weight="bold")
+    ax.annotate("re-tuned each point", (ret[2]["f_hz"] / 1e3,
+                                        max(ret[2]["vout"], 1e-12)),
+                textcoords="offset points", xytext=(6, -12), size=7.5,
+                color=SERIES["c"], weight="bold")
+    _style(ax, "frequency (kHz)", "settled V(C3)  (V)", logx=True, logy=True)
+    fig.tight_layout()
+    return fig
+
+
+def bode_db(b):
+    """The same thing in dB, which is what a Bode plot normally is."""
+    fix = [r for r in b["fixed"] if r["settled"] and r["vout"] > 0]
+    fig, ax = plt.subplots(figsize=(A4W, 2.4))
+    ax.plot([r["f_hz"] / 1e3 for r in fix], [r["db"] for r in fix],
+            color=SERIES["a"], lw=1.6, marker="o", ms=2.5)
+    ac = b.get("ac")
+    if ac:
+        vamp = b["params"]["vamp"]
+        f = np.array(ac["f"])
+        db = 20 * np.log10(np.maximum(np.array(ac["vrx_mag"]), 1e-30) / 1.0)
+        ax2 = ax.twinx()
+        ax2.plot(f / 1e3, db, color=SERIES["b"], lw=1.2, ls="--")
+        ax2.set_ylabel("AC sweep, |v(rx)| (dB, per V of drive)", size=8,
+                       color=SERIES["b"])
+        ax2.tick_params(labelsize=7.5, colors=SERIES["b"], length=3)
+        for sp in ax2.spines.values():
+            sp.set_color(GRID)
+        ax2.annotate("AC sweep (linearised diodes)", (f[len(f) // 4] / 1e3,
+                                                      db[len(f) // 4]),
+                     textcoords="offset points", xytext=(6, 6), size=7.5,
+                     color=SERIES["b"], weight="bold")
+    ax.annotate("transient, settled V(C3)",
+                (fix[len(fix) // 2]["f_hz"] / 1e3, fix[len(fix) // 2]["db"]),
+                textcoords="offset points", xytext=(6, -14), size=7.5,
+                color=SERIES["a"], weight="bold")
+    _style(ax, "frequency (kHz)", "20 log10( V(C3) / V_drive )  (dB)",
+           logx=True)
+    fig.tight_layout()
+    return fig
+
+
+def bode_cycles(b):
+    """How long each point took, against what a cold run would have needed."""
+    fix = b["fixed"]
+    fig, ax = plt.subplots(figsize=(A4W, 2.3))
+    ax.plot([r["f_hz"] / 1e3 for r in fix], [r["cycles"] for r in fix],
+            color=SERIES["a"], lw=1.6, marker="o", ms=3)
+    ax.plot([r["f_hz"] / 1e3 for r in fix],
+            [r.get("naive_cycles", np.nan) for r in fix],
+            color=SERIES["b"], lw=1.6, ls="--")
+    ax.annotate("what it took", (fix[len(fix) // 3]["f_hz"] / 1e3,
+                                 fix[len(fix) // 3]["cycles"]),
+                textcoords="offset points", xytext=(6, -12), size=7.5,
+                color=SERIES["a"], weight="bold")
+    ax.annotate("what a cold run would need",
+                (fix[len(fix) // 2]["f_hz"] / 1e3,
+                 fix[len(fix) // 2].get("naive_cycles", 1)),
+                textcoords="offset points", xytext=(-6, 6), size=7.5,
+                color=SERIES["b"], weight="bold", ha="right")
+    _style(ax, "frequency (kHz)", "carrier cycles simulated", logx=True,
+           logy=True)
+    fig.tight_layout()
+    return fig
+
+
+def k_forced(ks):
+    """Output against a forced coupling, with the real one marked."""
+    fig, ax = plt.subplots(figsize=(A4W, 2.3))
+    ax.plot([r["k"] for r in ks], [max(r["vout"], 1e-12) for r in ks],
+            color=SERIES["a"], lw=1.6, marker="o", ms=3)
+    real = [r for r in ks if r.get("is_real")]
+    if real:
+        r = real[0]
+        ax.plot([r["k"]], [r["vout"]], marker="*", ms=13, color=MARK, lw=0)
+        ax.annotate("the geometry gives\nk = %.2e" % r["k"],
+                    (r["k"], r["vout"]), textcoords="offset points",
+                    xytext=(10, -4), size=7.5, color=MARK, weight="bold")
+    ax.axvline(1.0, color=GRID, lw=1.0)
+    ax.annotate("k = 1: perfect flux linkage,\nnot reachable here", (1.0, 1e-3),
+                textcoords="offset points", xytext=(-8, 0), size=7,
+                color=MUTED, ha="right")
+    _style(ax, "coupling k (forced)", "settled V(C3)  (V)", logx=True,
+           logy=True)
+    fig.tight_layout()
+    return fig
+
+
+def tx_inductance_fig(rows):
+    """k and output against the transmitter's inductance - your 1 uH question."""
+    fig, ax = plt.subplots(figsize=(A4W, 2.4))
+    ax.plot([r["l_uh"] for r in rows], [r["k"] for r in rows],
+            color=SERIES["a"], lw=1.6, marker="o", ms=3)
+    _style(ax, "transmit coil inductance (uH)", "coupling k", logx=True,
+           logy=True)
+    ax.annotate("k - smaller coil, better coupling",
+                (rows[1]["l_uh"], rows[1]["k"]), textcoords="offset points",
+                xytext=(6, 6), size=7.5, color=SERIES["a"], weight="bold")
+    ax2 = ax.twinx()
+    ax2.plot([r["l_uh"] for r in rows], [r["vout"] for r in rows],
+             color=SERIES["c"], lw=1.6, ls="--", marker="s", ms=3)
+    ax2.set_ylabel("settled V(C3)  (V)", size=8, color=SERIES["c"])
+    ax2.tick_params(labelsize=7.5, colors=SERIES["c"], length=3)
+    for sp in ax2.spines.values():
+        sp.set_color(GRID)
+    best = max(rows, key=lambda r: r["vout"])
+    ax2.annotate("output", (best["l_uh"], best["vout"]),
+                 textcoords="offset points", xytext=(-8, -14), size=7.5,
+                 color=SERIES["c"], weight="bold", ha="right")
+    fig.tight_layout()
+    return fig
+
+
+def distance_fig(rows):
+    """Coupling and output against separation, with contact marked."""
+    fig, ax = plt.subplots(figsize=(A4W, 2.3))
+    ax.plot([r["z_mm"] for r in rows], [r["vout"] for r in rows],
+            color=SERIES["a"], lw=1.6, marker="o", ms=3)
+    _style(ax, "separation (mm)", "settled V(C3)  (V)", logx=True, logy=True)
+    for z, lab, col in ((0.5, "contact\n(this report)", MARK),
+                        (5.0, "5 mm\n(phase 1 assumed)", MUTED)):
+        hit = min(rows, key=lambda r: abs(r["z_mm"] - z))
+        ax.plot([hit["z_mm"]], [hit["vout"]], marker="*", ms=12, color=col,
+                lw=0)
+        ax.annotate(lab, (hit["z_mm"], hit["vout"]),
+                    textcoords="offset points", xytext=(8, 2), size=7,
+                    color=col, weight="bold")
+    fig.tight_layout()
+    return fig

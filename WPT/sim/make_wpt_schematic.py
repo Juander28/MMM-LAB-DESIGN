@@ -207,6 +207,20 @@ tran %.4g %.4g
     body += 'C {devices/code_shown.sym} 340 200 0 0 {name=NGSPICE only_toplevel=true\nvalue="\n%s"}\n' % ctrl
     body += 'C {devices/title.sym} -220 390 0 0 {name=l5 author="UCI/INRF - MMM Lab"}\n'
 
+    # DO NOT CLOBBER A HAND-EDITED DRAWING.  WPT.sch was edited by hand -
+    # the receive coil swapped for a plain ind.sym so K1 could reach it,
+    # labels added, the coupling uncommented - and an earlier version of this
+    # guard looked for the generator's banner, which the edit had kept.  So it
+    # passed, and the edits were overwritten.  The only reliable test is
+    # whether the file on disk is byte-for-byte what this script would write.
+    if os.path.exists(OUT) and "--force" not in sys.argv:
+        if open(OUT).read() != body:
+            print("REFUSING to overwrite %s" % OUT)
+            print("  What is on disk is not what this script produces, so it")
+            print("  has been edited since.  Your drawing wins by default.")
+            print("  --force overwrites it; make_sim_schematic.py writes")
+            print("  WPT_sim.sch instead and never touches this file.")
+            return 2
     with open(OUT, "w") as fh:
         fh.write(body)
     print("wrote %s" % OUT)

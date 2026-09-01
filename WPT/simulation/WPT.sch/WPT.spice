@@ -1,0 +1,42 @@
+** sch_path: /foss/designs/MMM-LAB DESIGN/WPT/WPT.sch
+**.subckt WPT
+C1 med rec 10u
+XM1 med med 0 igzo_tft W=6000u L=5u ov=2u nf=1 m=1 B=0 b_scale=1
+XM2 med med OUT igzo_tft W=6000u L=5u ov=2u nf=1 m=1 B=0 b_scale=1
+C3 0 OUT 10u
+RL OUT 0 10k
+V1 tran 0 DC 0 AC 1 SIN(0 152.145 500k)
+.save i(v1)
+R1 IN tran 1
+L2 IN 0 171.482u
+L1 rec 0 171.482u
+**** begin user architecture code
+
+.include /headless/pdks/TFT-MMM-LAB-PDK/libs.tech/ngspice/design.ngspice
+.lib /headless/pdks/TFT-MMM-LAB-PDK/libs.tech/ngspice/igzo_mmm_lab.ngspice tt
+
+
+
+* The transmit loop MUST be series-tuned: L2 is 171.482uH and its reactance at
+* 500 kHz is 539 ohms against 10.57 ohms of resistance.  Untuned, the drive
+* current - and with it everything downstream - falls by a factor of about 51.
+CTX  n_txa n_tx1 590.855p
+*
+* THE COUPLING BELONGS HERE AND CANNOT GO HERE.  ngspice will not couple an
+* inductor inside a subcircuit, and L1 above is the ind_igzo subcircuit:
+*     Fatal error: k1: coupling to non-existent inductor xl1.l1
+* The coupled netlist is sim/wpt_core.spice, generated from the same numbers.
+ K1 L1 L2 0.00358402
+*
+.control
+set filetype=ascii
+ac dec 40 1e3 1e7
+plot v(out)
+tran 1e-08 0.00012
+plot v(out)
+.endc
+
+
+**** end user architecture code
+**.ends
+.end

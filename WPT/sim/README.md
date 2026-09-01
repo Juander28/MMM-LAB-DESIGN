@@ -10,6 +10,23 @@ values back into it, and nothing that holds a number is written by hand twice.
 optimal and the rectifier is sized; the ceiling is the receive coil's Q of
 0.0064. See `WPT_diseno_es.pdf` for the whole argument.
 
+## Phase 2: the transient Bode, and a bench you can drive
+
+`WPT_bode_es.pdf` is the second report. It uses **different assumptions** from
+the first one and says so on its own front page: contact separation instead of
+5 mm, L = 10 um instead of 5, and a transmit coil of 0.84 uH instead of 171.5.
+At 500 kHz it delivers 6.94 V instead of 0.80 V.
+
+The transmit coil changed because of one remark: *smaller coils coupled better,
+about 1 uH*. That is right, and it is the largest single improvement in either
+report - k = M/sqrt(L1 L2), so dropping L1 raises k even when M does not move.
+At contact a 1 mm former with 8 turns in 4 layers gives k = 0.116 against
+0.0077 for the 15 mm coil. The optimum is flat from about 0.8 to 15 uH.
+
+**Everything now lives in `params.py`.** Change a value there, re-run, done.
+`python3 params.py` prints the configuration and warns about combinations that
+cannot mean what they say.
+
 ## Files
 
 | File | What it is |
@@ -22,8 +39,14 @@ optimal and the rectifier is sized; the ceiling is the receive coil's Q of
 | `wpt_core_gen.py` | writes `wpt_core.spice`, the same link as a standalone netlist |
 | `rectifier.py` | sizing the two diode-connected TFTs, at every corner |
 | `sweep.py` | frequency, distance, load, and the coupling-capacitor experiment |
-| `make_wpt_schematic.py` | the values back into `WPT.sch`, plus what the drawing was missing |
-| `figures.py`, `report_text.py`, `make_wpt_report.py` | the PDF, every number computed live |
+| `make_wpt_schematic.py` | the values back into `WPT.sch`; refuses to clobber hand edits |
+| `figures.py`, `report_text.py`, `make_wpt_report.py` | the phase-1 PDF, every number computed live |
+| **`params.py`** | **every knob of the link, in one file - start here** |
+| `bode_tran.py` | the Bode plot built from transient runs, read off the settled V(C3) |
+| `k_study.py` | forced coupling, the transmitter's inductance, the separation |
+| `make_sim_schematic.py` | `WPT_sim.sch` - the version that simulates in xschem |
+| `shot_xschem.sh` | photographs both schematics on a private X server |
+| `bode_text.py`, `make_wpt_bode_report.py` | the phase-2 PDF |
 
 ## Reproducing
 
@@ -44,6 +67,44 @@ python3 make_wpt_report.py        # ../WPT_diseno_es.pdf
 ```
 
 Run them in that order: each reads the JSON the previous one wrote.
+
+## Phase 2 reproducing
+
+```bash
+python3 params.py                 # the configuration, and its warnings
+python3 bode_tran.py --selftest   # the settling detector, against an RC
+python3 bode_tran.py              # bode_tran.json + csv   (~8 min)
+python3 k_study.py                # k_study.json + csv     (~4 min)
+python3 make_sim_schematic.py     # ../WPT_sim.sch
+./shot_xschem.sh                  # ../figures/*.png
+python3 make_wpt_bode_report.py   # ../WPT_bode_es.pdf
+xschem ../WPT_sim.sch             # and simulate it by hand
+```
+
+## Four more traps, all from phase 2
+
+**A path with a space breaks three different tools, silently.** This project
+lives under `MMM-LAB DESIGN`. ngspice's `wrdata` splits its filename on
+whitespace and writes nothing; xschem's `print png` does the same; and an
+unbraced `set netlist_dir /foss/.../MMM-LAB DESIGN/...` in an xschemrc is a Tcl
+syntax error that makes xschem abort the rcfile and then fail to paint. None of
+the three reports an error. Write to a space-free temp path and brace Tcl
+arguments.
+
+**"Run the transient until it settles" does not scale.** The output filter is
+10 uF into 10 k - 0.1 s - against a 2 us carrier: a quarter of a million cycles
+per point. The settled value does not depend on the capacitor, so it is found
+on a small one and confirmed on the real one. 940 cycles instead of 250 000.
+
+**A relative convergence test never converges on noise.** At the bottom of the
+sweep the output is a fraction of a nanovolt and the last digit keeps moving,
+so every low-frequency point ran to the cycle cap. `BODE_ABS_V` is the floor.
+
+**A logarithmic grid cannot resolve a narrow peak.** At 8 points per decade the
+step near 500 kHz is 163 kHz; the phase-1 transmitter's tuned peak was 11 kHz
+wide. The sweep jumped clean over it and reported a maximum six times too low,
+with a curve that looked perfectly smooth. The grid now carries extra points on
+the resonance and the operating frequency itself.
 
 ## Seven things that were wrong first, and are easy to get wrong again
 
